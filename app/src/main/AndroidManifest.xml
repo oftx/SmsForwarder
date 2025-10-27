@@ -2,10 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- 不再需要前台服务权限 -->
+    <!-- <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- 添加前台服务权限，对于高版本安卓更稳定 -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
 
     <application
         android:allowBackup="true"
@@ -27,7 +26,6 @@
             android:name="xposedminversion"
             android:value="52" />
 
-        <!-- 目标作用域现在应该是 com.android.mms -->
         <meta-data
             android:name="xposedscope"
             android:value="com.android.mms" />
@@ -41,26 +39,21 @@
             </intent-filter>
         </activity>
 
-        <!-- START: 更新 Receiver 和 Service 注册 -->
+        <!-- START: 关键修改 -->
 
-        <!-- 移除旧的 SmsReceiver 和 LogReceiver -->
-        <!-- <receiver android:name=".SmsReceiver" ... /> -->
-        <!-- <receiver android:name=".LogReceiver" ... /> -->
+        <!-- 1. 移除不再需要的 BroadcastReceiver 和 Service -->
+        <!-- <receiver android:name=".SmsBroadcastReceiver" ... /> -->
+        <!-- <service android:name=".SmsHandlingService" ... /> -->
 
-        <!-- 注册新的、用于启动服务的 BroadcastReceiver -->
-        <receiver
-            android:name=".SmsBroadcastReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="github.oftx.smsforwarder.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
+        <!-- 2. 注册新的 ContentProvider -->
+        <!-- android:authorities 必须是唯一的，作为Provider的地址 -->
+        <!-- android:exported="true" 允许其他进程（如 com.android.mms）访问它 -->
+        <provider
+            android:name=".SmsProvider"
+            android:authorities="github.oftx.smsforwarder.provider"
+            android:exported="true" />
 
-        <!-- 注册用于处理后台任务的 Service -->
-        <service android:name=".SmsHandlingService"
-            android:exported="false"/>
-
-        <!-- END: 更新 Receiver 和 Service 注册 -->
+        <!-- END: 关键修改 -->
 
     </application>
 
