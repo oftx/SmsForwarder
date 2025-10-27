@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 添加前台服务权限，对于高版本安卓更稳定 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
 
     <application
         android:allowBackup="true"
@@ -11,7 +14,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
+        android.supportsRtl="true"
         android:theme="@style/Theme.SmsForwarder">
 
         <meta-data
@@ -24,9 +27,10 @@
             android:name="xposedminversion"
             android:value="52" />
 
+        <!-- 目标作用域现在应该是 com.android.mms -->
         <meta-data
             android:name="xposedscope"
-            android:value="com.android.providers.telephony" />
+            android:value="com.android.mms" />
 
         <activity
             android:name=".MainActivity"
@@ -37,21 +41,27 @@
             </intent-filter>
         </activity>
 
+        <!-- START: 更新 Receiver 和 Service 注册 -->
+
+        <!-- 移除旧的 SmsReceiver 和 LogReceiver -->
+        <!-- <receiver android:name=".SmsReceiver" ... /> -->
+        <!-- <receiver android:name=".LogReceiver" ... /> -->
+
+        <!-- 注册新的、用于启动服务的 BroadcastReceiver -->
         <receiver
-            android:name=".SmsReceiver"
+            android:name=".SmsBroadcastReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="github.oftx.smsforwarder.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
 
-        <receiver
-            android:name=".LogReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="github.oftx.smsforwarder.LOG_RECEIVED" />
-            </intent-filter>
-        </receiver>
+        <!-- 注册用于处理后台任务的 Service -->
+        <service android:name=".SmsHandlingService"
+            android:exported="false"/>
+
+        <!-- END: 更新 Receiver 和 Service 注册 -->
+
     </application>
 
 </manifest>
