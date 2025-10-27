@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -48,4 +49,8 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     compileOnly("de.robv.android.xposed:api:82")
+
+    implementation("androidx.room:room-runtime:2.5.0")
+    implementation("androidx.room:room-ktx:2.5.0") // Provides Kotlin Coroutines support
+    ksp("androidx.room:room-compiler:2.5.0")
 }
