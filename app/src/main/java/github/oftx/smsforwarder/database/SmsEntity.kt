@@ -1,4 +1,4 @@
-package github.oftx.smsforwarder
+package github.oftx.smsforwarder.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -11,9 +11,8 @@ data class SmsEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val sender: String,
     val content: String,
-    val timestamp: Long = System.currentTimeMillis() // 使用 Long 类型存储时间戳，更标准
+    val timestamp: Long = System.currentTimeMillis()
 ) {
-    // 方便转换的辅助函数
     fun getFormattedTimestamp(): String {
         return SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(timestamp))
     }

@@ -1,0 +1,7 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <SwitchPreferenceCompat
+        app:key="pref_retry_on_fail"
+        app:title="转发失败后重试"
+        app:summary="当网络或目标服务器出现问题时，自动在后台重新发送"
+        app:defaultValue="true" />
+</PreferenceScreen>

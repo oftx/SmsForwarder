@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.devtools.ksp")
+    alias(libs.plugins.kotlin.serialization) // Add serialization plugin
 }
 
 android {
@@ -12,8 +13,8 @@ android {
         applicationId = "github.oftx.smsforwarder"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -34,6 +35,9 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
@@ -50,7 +54,17 @@ dependencies {
 
     compileOnly("de.robv.android.xposed:api:82")
 
-    implementation("androidx.room:room-runtime:2.5.0")
-    implementation("androidx.room:room-ktx:2.5.0") // Provides Kotlin Coroutines support
-    ksp("androidx.room:room-compiler:2.5.0")
+    // Room Database
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // --- START: New Dependencies ---
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.preference.ktx)
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.serialization.json)
+    // --- END: New Dependencies ---
 }
