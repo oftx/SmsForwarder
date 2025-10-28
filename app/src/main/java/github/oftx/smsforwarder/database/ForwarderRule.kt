@@ -8,8 +8,8 @@ import kotlinx.serialization.Serializable
 data class ForwarderRule(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val type: String, // "BARK"
-    val configJson: String, // e.g., '{"key":"your_bark_key"}'
+    val type: String,
+    val configJson: String,
     val isEnabled: Boolean = true
 ) {
     companion object {
@@ -18,4 +18,15 @@ data class ForwarderRule(
 }
 
 @Serializable
-data class BarkConfig(val key: String)
+data class BarkConfig(
+    val key: String,
+    val isEncrypted: Boolean = false,
+    val algorithm: String? = ALGORITHM_AES_CBC, // e.g. "AES/CBC"
+    val encryptionKey: String? = null,
+    val iv: String? = null
+) {
+    companion object {
+        const val ALGORITHM_AES_CBC = "AES/CBC"
+        const val ALGORITHM_AES_ECB = "AES/ECB"
+    }
+}

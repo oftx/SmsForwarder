@@ -9,12 +9,18 @@ import github.oftx.smsforwarder.database.BarkConfig
 import github.oftx.smsforwarder.database.ForwarderRule
 import github.oftx.smsforwarder.database.JobStatus
 import github.oftx.smsforwarder.database.SmsEntity
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
+
+@Serializable
+data class BarkPayload(val body: String, val title: String, val group: String = "SmsForwarder")
 
 class SmsForwardWorker(
     appContext: Context,
@@ -35,7 +41,7 @@ class SmsForwardWorker(
         val jobId = inputData.getLong("job_id", -1L)
         if (jobId == -1L) return Result.failure()
 
-        val job = jobDao.getJobById(jobId) ?: return Result.success() // Job might have been cancelled
+        val job = jobDao.getJobById(jobId) ?: return Result.success()
         val rule = ruleDao.getRuleById(job.ruleId) ?: return Result.failure()
         val sms = smsDao.getSmsById(job.smsId) ?: return Result.failure()
 
@@ -51,23 +57,45 @@ class SmsForwardWorker(
         }
     }
 
-    private suspend fun forwardToBark(rule: ForwarderRule, sms: SmsEntity) {
+    private fun forwardToBark(rule: ForwarderRule, sms: SmsEntity) {
         val config = Json.decodeFromString<BarkConfig>(rule.configJson)
         if (config.key.isBlank()) throw Exception("Bark key is empty")
 
         val url = "https://api.day.app/${config.key}"
-        val jsonBody = """
-            {
-              "body": "${sms.content}",
-              "title": "新短信来自: ${sms.sender}",
-              "group": "SmsForwarder"
-            }
-        """.trimIndent()
+        val payload = BarkPayload(body = sms.content, title = "新短信来自: ${sms.sender}")
+        val payloadJson = Json.encodeToString(payload)
 
-        val request = Request.Builder()
-            .url(url)
-            .post(jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType()))
-            .build()
+        val request: Request
+
+        if (config.isEncrypted && !config.encryptionKey.isNullOrBlank()) {
+            // Encrypted Request
+            val iv = config.iv.orEmpty()
+            val ciphertext = CryptoUtils.encrypt(
+                payload = payloadJson,
+                algorithm = config.algorithm ?: BarkConfig.ALGORITHM_AES_CBC,
+                key = config.encryptionKey,
+                iv = iv
+            )
+
+            val formBodyBuilder = FormBody.Builder()
+                .add("ciphertext", ciphertext)
+            
+            // Only add IV if it's not empty and mode is CBC
+            if (iv.isNotEmpty() && config.algorithm == BarkConfig.ALGORITHM_AES_CBC) {
+                 formBodyBuilder.add("iv", iv)
+            }
+
+            request = Request.Builder()
+                .url(url)
+                .post(formBodyBuilder.build())
+                .build()
+        } else {
+            // Unencrypted Request
+            request = Request.Builder()
+                .url(url)
+                .post(payloadJson.toRequestBody("application/json; charset=utf-8".toMediaType()))
+                .build()
+        }
 
         val response = client.newCall(request).execute()
         if (!response.isSuccessful) {

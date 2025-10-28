@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="encryption_algorithms">
+        <item>AES/CBC</item>
+        <item>AES/ECB</item>
+    </string-array>
+</resources>
