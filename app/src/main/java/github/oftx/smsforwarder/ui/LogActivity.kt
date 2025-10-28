@@ -8,7 +8,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -17,16 +16,14 @@ import github.oftx.smsforwarder.databinding.ActivityLogBinding
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class LogActivity : AppCompatActivity() {
+class LogActivity : BaseActivity() {
 
     private lateinit var binding: ActivityLogBinding
     private val viewModel: LogViewModel by viewModels { LogViewModelFactory(application) }
     private lateinit var logAdapter: LogAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        ThemeManager.applyTheme(this)
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
         super.onCreate(savedInstanceState)
         binding = ActivityLogBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -71,12 +68,12 @@ class LogActivity : AppCompatActivity() {
 
     private fun showClearConfirmationDialog() {
         MaterialAlertDialogBuilder(this)
-            .setTitle("清空日志")
-            .setMessage("确定要删除所有日志记录吗？此操作无法撤销。")
-            .setNegativeButton("取消", null)
-            .setPositiveButton("清空") { _, _ ->
+            .setTitle(R.string.clear_logs_dialog_title)
+            .setMessage(R.string.clear_logs_dialog_message)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.clear) { _, _ ->
                 viewModel.clearLogs()
-                Toast.makeText(this, "日志已清空", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.logs_cleared, Toast.LENGTH_SHORT).show()
             }
             .show()
     }
@@ -87,7 +84,7 @@ class LogActivity : AppCompatActivity() {
             val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("SmsForwarder Logs", logString)
             clipboard.setPrimaryClip(clip)
-            Toast.makeText(this@LogActivity, "日志已复制到剪贴板", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@LogActivity, R.string.logs_copied_to_clipboard, Toast.LENGTH_SHORT).show()
         }
     }
 

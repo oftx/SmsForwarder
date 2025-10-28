@@ -1,3 +1,76 @@
 <resources>
     <string name="app_name">SmsForwarder</string>
+
+    <!-- General -->
+    <string name="settings">Settings</string>
+    <string name="forwarding_rules">Forwarding Rules</string>
+    <string name="add_rule">Add Rule</string>
+    <string name="edit_rule">Edit Rule</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="clear">Clear</string>
+    <string name="copy_all">Copy All</string>
+    <string name="success">Success</string>
+    <string name="error">Error</string>
+
+    <!-- Main Activity -->
+    <string name="main_activity_empty_state">No messages here</string>
+    <string name="sms_sender_format">From: %1$s</string>
+
+    <!-- Forwarder List Activity -->
+    <string name="delete_rule_dialog_title">Delete Rule</string>
+    <string name="delete_rule_dialog_message">Are you sure you want to delete the rule \"%1$s\"? This action cannot be undone.</string>
+
+    <!-- Bark Config Activity -->
+    <string name="bark_config_title_add">Add Bark Rule</string>
+    <string name="bark_config_title_edit">Edit Bark Rule</string>
+    <string name="hint_rule_name">Rule Name (e.g. My iPhone)</string>
+    <string name="hint_bark_key">Bark Key (Device Key)</string>
+    <string name="push_encryption">Push Encryption</string>
+    <string name="encryption_algorithm">Algorithm (Determined by key length)</string>
+    <string name="encryption_mode">Mode</string>
+    <string name="encryption_key_hint">Key</string>
+    <string name="encryption_iv_hint">IV (Offset)</string>
+    <string name="iv_cbc_hint">IV (16 bytes)</string>
+    <string name="iv_gcm_hint">IV / Nonce (12 bytes recommended)</string>
+    <string name="error_name_and_key_cannot_be_empty">Name and Bark Key cannot be empty</string>
+    <string name="error_invalid_key_length">Invalid key length</string>
+    <string name="error_key_length_must_be_16_24_32">Key length must be 16, 24, or 32 bytes (Current: %1$d)</string>
+    <string name="error_iv_length_for_cbc_must_be_16">IV length must be 16 bytes for CBC mode</string>
+    <string name="rule_saved_successfully">Rule saved successfully</string>
+
+    <!-- Log Activity -->
+    <string name="log_activity_title">App Logs</string>
+    <string name="clear_logs_dialog_title">Clear Logs</string>
+    <string name="clear_logs_dialog_message">Are you sure you want to delete all log records? This action cannot be undone.</string>
+    <string name="logs_cleared">Logs cleared</string>
+    <string name="logs_copied_to_clipboard">Logs copied to clipboard</string>
+
+    <!-- Settings -->
+    <string name="settings_category_general">General</string>
+    <string name="pref_retry_on_fail_title">Retry on Fail</string>
+    <string name="pref_retry_on_fail_summary">Automatically resend in the background when network or server issues occur</string>
+    <string name="pref_view_logs_title">View Logs</string>
+    <string name="pref_view_logs_summary">Open application and forwarding logs</string>
+
+    <string name="settings_category_appearance">Appearance</string>
+    <string name="pref_monet_theme_title">Monet Theme</string>
+    <string name="pref_monet_theme_summary">Follow system wallpaper color (Android 12+)</string>
+    <string name="pref_language_title">Language</string>
+
+    <string name="settings_category_data_management">Data Management</string>
+    <string name="pref_sms_limit_title">Message Storage Limit</string>
+    <string name="pref_sms_limit_dialog_title">Enter limit</string>
+    <string name="pref_sms_limit_dialog_hint">Set to -1 or 0 for no limit</string>
+    <string name="pref_sms_limit_summary_unlimited">Unlimited</string>
+    <string name="pref_sms_limit_summary_format">%1$s messages</string>
+    <string name="pref_clear_sms_title">Clear All Messages</string>
+    <string name="pref_clear_sms_summary">Delete all saved SMS records</string>
+    <string name="clear_sms_dialog_title">Clear All Messages</string>
+    <string name="clear_sms_dialog_message">Are you sure you want to delete all saved SMS records? This action cannot be undone.</string>
+    <string name="all_messages_cleared">All messages cleared</string>
+
+    <!-- Worker -->
+    <string name="worker_new_sms_title">New message from: %1$s</string>
 </resources>

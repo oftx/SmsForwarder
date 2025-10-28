@@ -1,37 +1,44 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory app:title="常规">
+    <PreferenceCategory app:title="@string/settings_category_general">
         <SwitchPreferenceCompat
             app:key="pref_retry_on_fail"
-            app:title="转发失败后重试"
-            app:summary="当网络或目标服务器出现问题时，自动在后台重新发送"
+            app:title="@string/pref_retry_on_fail_title"
+            app:summary="@string/pref_retry_on_fail_summary"
             app:defaultValue="true" />
         <Preference
             app:key="pref_view_logs"
-            app:title="查看日志"
-            app:summary="打开应用和转发日志记录" />
+            app:title="@string/pref_view_logs_title"
+            app:summary="@string/pref_view_logs_summary" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="外观">
+    <PreferenceCategory app:title="@string/settings_category_appearance">
         <SwitchPreferenceCompat
             app:key="pref_monet_theme"
-            app:title="莫奈取色"
-            app:summary="跟随系统壁纸颜色 (Android 12+)"
+            app:title="@string/pref_monet_theme_title"
+            app:summary="@string/pref_monet_theme_summary"
             app:defaultValue="true" />
+        <ListPreference
+            app:key="pref_language"
+            app:title="@string/pref_language_title"
+            app:entries="@array/language_entries"
+            app:entryValues="@array/language_entry_values"
+            app:defaultValue="system"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="数据管理">
+    <PreferenceCategory app:title="@string/settings_category_data_management">
         <EditTextPreference
             app:key="pref_sms_limit"
-            app:title="信息保存数量上限"
+            app:title="@string/pref_sms_limit_title"
             app:defaultValue="-1"
-            app:dialogTitle="输入数量上限"
+            app:dialogTitle="@string/pref_sms_limit_dialog_title"
             android:inputType="numberSigned" />
         <Preference
             app:key="pref_clear_sms"
-            app:title="清空所有消息"
-            app:summary="删除所有已保存的短信记录" />
+            app:title="@string/pref_clear_sms_title"
+            app:summary="@string/pref_clear_sms_summary" />
     </PreferenceCategory>
 
 </PreferenceScreen>

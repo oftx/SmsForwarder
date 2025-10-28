@@ -5,12 +5,12 @@
     <item
         android:id="@+id/action_add_forwarder"
         android:icon="@drawable/ic_add"
-        android:title="添加转发规则"
+        android:title="@string/forwarding_rules"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_settings"
-        android:title="设置"
+        android:title="@string/settings"
         app:showAsAction="ifRoom" />
 </menu>

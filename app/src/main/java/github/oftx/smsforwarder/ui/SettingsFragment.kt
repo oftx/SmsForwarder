@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
@@ -22,6 +23,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
         val monetPref = findPreference<SwitchPreferenceCompat>("pref_monet_theme")
+        val languagePref = findPreference<ListPreference>("pref_language")
         val smsLimitPref = findPreference<EditTextPreference>("pref_sms_limit")
         val clearSmsPref = findPreference<Preference>("pref_clear_sms")
         val viewLogsPref = findPreference<Preference>("pref_view_logs")
@@ -29,26 +31,34 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // 1. Monet/Dynamic Color Preference
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             monetPref?.setOnPreferenceChangeListener { _, _ ->
-                // The value is saved automatically. We just need to restart the activity.
                 activity?.recreate()
                 true
             }
         } else {
-            // Hide the setting on older Android versions
             monetPref?.isVisible = false
         }
 
-        // 2. SMS Limit Preference
+        // 2. Language Preference
+        languagePref?.setOnPreferenceChangeListener { _, _ ->
+            activity?.recreate()
+            true
+        }
+
+        // 3. SMS Limit Preference
         smsLimitPref?.summaryProvider = Preference.SummaryProvider<EditTextPreference> { preference ->
             val text = preference.text
             val value = text?.toIntOrNull() ?: -1
-            if (value <= 0) "无上限" else "$value 条消息"
+            if (value <= 0) {
+                getString(R.string.pref_sms_limit_summary_unlimited)
+            } else {
+                getString(R.string.pref_sms_limit_summary_format, text)
+            }
         }
         smsLimitPref?.setOnBindEditTextListener { editText ->
-            editText.hint = "设置为 -1 或 0 则无上限"
+            editText.hint = getString(R.string.pref_sms_limit_dialog_hint)
         }
 
-        // 3. Click listeners
+        // 4. Click listeners
         viewLogsPref?.setOnPreferenceClickListener {
             startActivity(Intent(requireContext(), LogActivity::class.java))
             true
@@ -61,12 +71,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     private fun showClearSmsConfirmationDialog() {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("清空所有消息")
-            .setMessage("您确定要删除所有已保存的短信记录吗？此操作无法撤销。")
-            .setNegativeButton("取消", null)
-            .setPositiveButton("清空") { _, _ ->
+            .setTitle(R.string.clear_sms_dialog_title)
+            .setMessage(R.string.clear_sms_dialog_message)
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.clear) { _, _ ->
                 viewModel.clearAllSms()
-                Toast.makeText(requireContext(), "所有消息已清空", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), R.string.all_messages_cleared, Toast.LENGTH_SHORT).show()
             }
             .show()
     }

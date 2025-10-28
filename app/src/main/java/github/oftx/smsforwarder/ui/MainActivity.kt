@@ -4,8 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,18 +14,15 @@ import github.oftx.smsforwarder.databinding.ActivityMainBinding
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels { MainViewModelFactory(application) }
     private lateinit var listAdapter: MainAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Apply theme and edge-to-edge BEFORE super.onCreate()
-        ThemeManager.applyTheme(this)
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        
-        super.onCreate(savedInstanceState)
+        super.onCreate(savedInstanceState) // BaseActivity's onCreate handles theme
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
@@ -52,6 +49,15 @@ class MainActivity : AppCompatActivity() {
     private fun observeViewModel() {
         lifecycleScope.launch {
             viewModel.listItems.collectLatest { items ->
+                // Handle empty state visibility
+                if (items.isEmpty()) {
+                    binding.rvSms.visibility = View.GONE
+                    binding.tvEmptyView.visibility = View.VISIBLE
+                } else {
+                    binding.rvSms.visibility = View.VISIBLE
+                    binding.tvEmptyView.visibility = View.GONE
+                }
+
                 val wasAtTop = (binding.rvSms.layoutManager as LinearLayoutManager)
                     .findFirstCompletelyVisibleItemPosition() == 0
                 listAdapter.submitList(items) {

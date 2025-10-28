@@ -36,7 +36,7 @@
                     android:id="@+id/edit_text_rule_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="规则名称 (例如 我的iPhone)" />
+                    android:hint="@string/hint_rule_name" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -49,7 +49,7 @@
                     android:id="@+id/edit_text_bark_key"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Bark Key (Device Key)" />
+                    android:hint="@string/hint_bark_key" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.divider.MaterialDivider
@@ -64,7 +64,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
-                android:text="推送加密"
+                android:text="@string/push_encryption"
                 android:textSize="16sp"/>
 
             <LinearLayout
@@ -86,7 +86,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="none"
-                        android:hint="算法 (由密钥长度决定)" />
+                        android:hint="@string/encryption_algorithm" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -101,7 +101,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="none"
-                        android:hint="模式" />
+                        android:hint="@string/encryption_mode" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -116,7 +116,7 @@
                         android:id="@+id/edit_text_encryption_key"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Key (密钥)" />
+                        android:hint="@string/encryption_key_hint" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -129,7 +129,7 @@
                         android:id="@+id/edit_text_iv"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="IV (偏移量)" />
+                        android:hint="@string/encryption_iv_hint" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
@@ -138,7 +138,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
-                android:text="保存"/>
+                android:text="@string/save"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

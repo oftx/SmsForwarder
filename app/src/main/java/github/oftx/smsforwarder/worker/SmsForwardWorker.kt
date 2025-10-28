@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import github.oftx.smsforwarder.AppDatabase
 import github.oftx.smsforwarder.AppLogger
+import github.oftx.smsforwarder.R
 import github.oftx.smsforwarder.database.BarkConfig
 import github.oftx.smsforwarder.database.ForwarderRule
 import github.oftx.smsforwarder.database.JobStatus
@@ -29,7 +30,7 @@ class SmsForwardWorker(
 ) : CoroutineWorker(appContext, params) {
 
     private val db = AppDatabase.getDatabase(appContext)
-    private val smsDao = db.smsDao() // <-- THIS LINE WAS MISSING
+    private val smsDao = db.smsDao()
     private val ruleDao = db.forwarderRuleDao()
     private val jobDao = db.forwardingJobDao()
 
@@ -78,7 +79,8 @@ class SmsForwardWorker(
         if (config.key.isBlank()) throw Exception("Bark key is empty")
 
         val url = "https://api.day.app/${config.key}"
-        val payload = BarkPayload(body = sms.content, title = "新短信来自: ${sms.sender}")
+        val title = appContext.getString(R.string.worker_new_sms_title, sms.sender)
+        val payload = BarkPayload(body = sms.content, title = title)
         val payloadJson = Json.encodeToString(payload)
 
         val request: Request

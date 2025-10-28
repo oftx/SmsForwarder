@@ -3,17 +3,17 @@ package github.oftx.smsforwarder.ui
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import github.oftx.smsforwarder.R
 import github.oftx.smsforwarder.database.ForwarderRule
 import github.oftx.smsforwarder.databinding.ActivityForwarderListBinding
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class ForwarderListActivity : AppCompatActivity() {
+class ForwarderListActivity : BaseActivity() {
     private lateinit var binding: ActivityForwarderListBinding
     private val viewModel: ForwarderListViewModel by viewModels {
         ForwarderListViewModelFactory(application)
@@ -21,9 +21,7 @@ class ForwarderListActivity : AppCompatActivity() {
     private lateinit var ruleAdapter: ForwarderRuleAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        ThemeManager.applyTheme(this)
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
         super.onCreate(savedInstanceState)
         binding = ActivityForwarderListBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -69,10 +67,10 @@ class ForwarderListActivity : AppCompatActivity() {
 
     private fun showDeleteConfirmationDialog(rule: ForwarderRule) {
         MaterialAlertDialogBuilder(this)
-            .setTitle("删除规则")
-            .setMessage("您确定要删除规则 \"${rule.name}\" 吗？此操作无法撤销。")
-            .setNegativeButton("取消", null)
-            .setPositiveButton("删除") { _, _ ->
+            .setTitle(R.string.delete_rule_dialog_title)
+            .setMessage(getString(R.string.delete_rule_dialog_message, rule.name))
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.delete) { _, _ ->
                 viewModel.deleteRule(rule)
             }
             .show()

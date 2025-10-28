@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.lifecycleScope
@@ -19,7 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-class BarkConfigActivity : AppCompatActivity() {
+class BarkConfigActivity : BaseActivity() {
 
     companion object {
         const val EXTRA_RULE_ID = "EXTRA_RULE_ID"
@@ -31,9 +30,7 @@ class BarkConfigActivity : AppCompatActivity() {
     private var isUpdating = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        ThemeManager.applyTheme(this)
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
         super.onCreate(savedInstanceState)
         binding = ActivityBarkConfigBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -47,12 +44,12 @@ class BarkConfigActivity : AppCompatActivity() {
 
         if (ruleId != -1L) {
             isUpdating = true
-            supportActionBar?.title = "编辑 Bark 规则"
+            supportActionBar?.title = getString(R.string.bark_config_title_edit)
             viewModel.loadRule(ruleId)
             observeExistingRule()
         } else {
             isUpdating = false
-            supportActionBar?.title = "添加 Bark 规则"
+            supportActionBar?.title = getString(R.string.bark_config_title_add)
         }
 
         binding.buttonSave.setOnClickListener {
@@ -106,7 +103,7 @@ class BarkConfigActivity : AppCompatActivity() {
                 binding.dropdownAlgorithm.setText(newAlgorithm, false)
                 binding.layoutEncryptionKey.error = null
             } else if (!text.isNullOrEmpty()) {
-                binding.layoutEncryptionKey.error = "密钥长度必须为 16, 24, 或 32 字节 (当前: $byteSize)"
+                binding.layoutEncryptionKey.error = getString(R.string.error_key_length_must_be_16_24_32, byteSize)
             } else {
                 binding.layoutEncryptionKey.error = null
             }
@@ -115,11 +112,11 @@ class BarkConfigActivity : AppCompatActivity() {
             when (text.toString()) {
                 BarkConfig.MODE_CBC -> {
                     binding.layoutIv.visibility = View.VISIBLE
-                    binding.layoutIv.hint = "IV (16字节)"
+                    binding.layoutIv.hint = getString(R.string.iv_cbc_hint)
                 }
                 BarkConfig.MODE_GCM -> {
                     binding.layoutIv.visibility = View.VISIBLE
-                    binding.layoutIv.hint = "IV / Nonce (推荐12字节)"
+                    binding.layoutIv.hint = getString(R.string.iv_gcm_hint)
                 }
                 BarkConfig.MODE_ECB -> {
                     binding.layoutIv.visibility = View.GONE
@@ -133,7 +130,7 @@ class BarkConfigActivity : AppCompatActivity() {
         val name = binding.editTextRuleName.text.toString().trim()
         val barkKey = binding.editTextBarkKey.text.toString().trim()
         if (name.isEmpty() || barkKey.isEmpty()) {
-            Snackbar.make(binding.root, "名称和Bark Key不能为空", Snackbar.LENGTH_SHORT).show()
+            Snackbar.make(binding.root, R.string.error_name_and_key_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
             return
         }
         val isEncrypted = binding.switchEncryption.isChecked
@@ -145,14 +142,14 @@ class BarkConfigActivity : AppCompatActivity() {
             encryptionKey = binding.editTextEncryptionKey.text.toString()
             val keyByteSize = encryptionKey.toByteArray(Charsets.UTF_8).size
             if (keyByteSize !in listOf(16, 24, 32)) {
-                Snackbar.make(binding.root, "密钥长度无效", Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(binding.root, R.string.error_invalid_key_length, Snackbar.LENGTH_SHORT).show()
                 return
             }
             iv = binding.editTextIv.text.toString()
             algorithm = binding.dropdownAlgorithm.text.toString()
             mode = binding.dropdownMode.text.toString()
             if (mode == BarkConfig.MODE_CBC && iv.toByteArray(Charsets.UTF_8).size != 16) {
-                Snackbar.make(binding.root, "CBC模式下IV长度必须为16字节", Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(binding.root, R.string.error_iv_length_for_cbc_must_be_16, Snackbar.LENGTH_SHORT).show()
                 return
             }
         }
@@ -168,7 +165,7 @@ class BarkConfigActivity : AppCompatActivity() {
         }
         viewModel.saveRule(ruleToSave, isUpdating)
         AppLogger.log(this, if(isUpdating) "Updated rule '${ruleToSave.name}'." else "Created new rule '${ruleToSave.name}'.")
-        Snackbar.make(binding.root, "保存成功", Snackbar.LENGTH_SHORT).show()
+        Snackbar.make(binding.root, R.string.rule_saved_successfully, Snackbar.LENGTH_SHORT).show()
         finish()
     }
 

@@ -15,7 +15,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:title="转发规则" />
+            app:title="@string/forwarding_rules" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -31,6 +31,6 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         app:srcCompat="@drawable/ic_add"
-        android:contentDescription="添加规则" />
+        android:contentDescription="@string/add_rule" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

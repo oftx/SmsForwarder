@@ -46,7 +46,7 @@ class MainAdapter(
         }
 
         fun bind(smsItem: SmsItem) {
-            senderTextView.text = "From: ${smsItem.sender}"
+            senderTextView.text = itemView.context.getString(R.string.sms_sender_format, smsItem.sender)
             contentTextView.text = smsItem.content
 
             // Set timestamp based on expanded state
