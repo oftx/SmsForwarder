@@ -3,16 +3,17 @@ package github.oftx.smsforwarder.ui
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
-import github.oftx.smsforwarder.AppDatabase
 import github.oftx.smsforwarder.AppLogger
 import github.oftx.smsforwarder.R
 import github.oftx.smsforwarder.database.BarkConfig
 import github.oftx.smsforwarder.database.ForwarderRule
 import github.oftx.smsforwarder.databinding.ActivityBarkConfigBinding
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -24,9 +25,9 @@ class BarkConfigActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivityBarkConfigBinding
-    private val db by lazy { AppDatabase.getDatabase(this) }
+    private val viewModel: BarkConfigViewModel by viewModels { BarkConfigViewModelFactory(application) }
     private var ruleId: Long = -1L
-    private var existingRule: ForwarderRule? = null
+    private var isUpdating = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,9 +42,12 @@ class BarkConfigActivity : AppCompatActivity() {
         ruleId = intent.getLongExtra(EXTRA_RULE_ID, -1L)
 
         if (ruleId != -1L) {
+            isUpdating = true
             supportActionBar?.title = "编辑 Bark 规则"
-            loadExistingRuleData()
+            viewModel.loadRule(ruleId)
+            observeExistingRule()
         } else {
+            isUpdating = false
             supportActionBar?.title = "添加 Bark 规则"
         }
 
@@ -52,13 +56,36 @@ class BarkConfigActivity : AppCompatActivity() {
         }
     }
 
+    private fun observeExistingRule() {
+        lifecycleScope.launch {
+            viewModel.existingRule.collectLatest { rule ->
+                rule?.let { populateUi(it) }
+            }
+        }
+    }
+
+    private fun populateUi(rule: ForwarderRule) {
+        binding.editTextRuleName.setText(rule.name)
+        val config = Json.decodeFromString<BarkConfig>(rule.configJson)
+        binding.editTextBarkKey.setText(config.key)
+        binding.switchEncryption.isChecked = config.isEncrypted
+        if (config.isEncrypted) {
+            binding.dropdownAlgorithm.setText(config.algorithm ?: BarkConfig.ALGORITHM_AES_128, false)
+            binding.dropdownMode.setText(config.mode ?: BarkConfig.MODE_CBC, false)
+            binding.editTextEncryptionKey.setText(config.encryptionKey)
+            binding.editTextIv.setText(config.iv)
+        }
+    }
+
     private fun setupEncryptionViews() {
         val algorithms = resources.getStringArray(R.array.encryption_algorithms)
         val modes = resources.getStringArray(R.array.encryption_modes)
         binding.dropdownAlgorithm.setAdapter(ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, algorithms))
         binding.dropdownMode.setAdapter(ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modes))
+
         binding.dropdownAlgorithm.setText(BarkConfig.ALGORITHM_AES_128, false)
         binding.dropdownMode.setText(BarkConfig.MODE_CBC, false)
+
         binding.switchEncryption.setOnCheckedChangeListener { _, isChecked ->
             binding.layoutEncryptionOptions.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
@@ -82,6 +109,7 @@ class BarkConfigActivity : AppCompatActivity() {
                 binding.layoutEncryptionKey.error = null
             }
         }
+
         binding.dropdownMode.doOnTextChanged { text, _, _, _ ->
             when (text.toString()) {
                 BarkConfig.MODE_CBC -> {
@@ -95,24 +123,6 @@ class BarkConfigActivity : AppCompatActivity() {
                 BarkConfig.MODE_ECB -> {
                     binding.layoutIv.visibility = View.GONE
                     binding.editTextIv.text?.clear()
-                }
-            }
-        }
-    }
-
-    private fun loadExistingRuleData() {
-        lifecycleScope.launch {
-            existingRule = db.forwarderRuleDao().getRuleById(ruleId)
-            existingRule?.let { rule ->
-                binding.editTextRuleName.setText(rule.name)
-                val config = Json.decodeFromString<BarkConfig>(rule.configJson)
-                binding.editTextBarkKey.setText(config.key)
-                binding.switchEncryption.isChecked = config.isEncrypted
-                if (config.isEncrypted) {
-                    binding.dropdownAlgorithm.setText(config.algorithm ?: BarkConfig.ALGORITHM_AES_128, false)
-                    binding.dropdownMode.setText(config.mode ?: BarkConfig.MODE_CBC, false)
-                    binding.editTextEncryptionKey.setText(config.encryptionKey)
-                    binding.editTextIv.setText(config.iv)
                 }
             }
         }
@@ -148,9 +158,6 @@ class BarkConfigActivity : AppCompatActivity() {
                 Snackbar.make(binding.root, "CBC模式下IV长度必须为16字节", Snackbar.LENGTH_SHORT).show()
                 return
             }
-            if (mode == BarkConfig.MODE_GCM && iv.toByteArray(Charsets.UTF_8).size != 12) {
-                Snackbar.make(binding.root, "GCM模式下IV长度推荐为12字节", Snackbar.LENGTH_SHORT).show()
-            }
         }
 
         val config = BarkConfig(
@@ -159,24 +166,17 @@ class BarkConfigActivity : AppCompatActivity() {
         )
         val configJson = Json.encodeToString(config)
 
-        lifecycleScope.launch {
-            val ruleToSave: ForwarderRule
-            if (existingRule != null) {
-                ruleToSave = existingRule!!.copy(name = name, configJson = configJson)
-                db.forwarderRuleDao().update(ruleToSave)
-                AppLogger.log(this@BarkConfigActivity, "Updated rule '${ruleToSave.name}'.")
-            } else {
-                ruleToSave = ForwarderRule(
-                    name = name, type = ForwarderRule.TYPE_BARK,
-                    configJson = configJson, isEnabled = true
-                )
-                db.forwarderRuleDao().insert(ruleToSave)
-                AppLogger.log(this@BarkConfigActivity, "Created new rule '${ruleToSave.name}'.")
-            }
-
-            Snackbar.make(binding.root, "保存成功", Snackbar.LENGTH_SHORT).show()
-            finish()
+        val ruleToSave = if (isUpdating) {
+            viewModel.existingRule.value!!.copy(name = name, configJson = configJson)
+        } else {
+            ForwarderRule(name = name, type = ForwarderRule.TYPE_BARK, configJson = configJson, isEnabled = true)
         }
+
+        viewModel.saveRule(ruleToSave, isUpdating)
+        AppLogger.log(this, if(isUpdating) "Updated rule '${ruleToSave.name}'." else "Created new rule '${ruleToSave.name}'.")
+
+        Snackbar.make(binding.root, "保存成功", Snackbar.LENGTH_SHORT).show()
+        finish()
     }
 
     override fun onSupportNavigateUp(): Boolean {

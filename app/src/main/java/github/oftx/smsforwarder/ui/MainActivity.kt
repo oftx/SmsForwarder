@@ -15,12 +15,6 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    companion object {
-        // This action is still useful if we want other parts of the app to react,
-        // but MainActivity will now primarily rely on the database flow.
-        const val ACTION_UPDATE_UI = "github.oftx.smsforwarder.UPDATE_UI"
-    }
-
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels { MainViewModelFactory(application) }
     private lateinit var listAdapter: MainAdapter
@@ -36,12 +30,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        listAdapter = MainAdapter()
-        binding.rvSms.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity).apply {
-                reverseLayout = true // Show latest items at the bottom and scroll down
-                stackFromEnd = true
+        listAdapter = MainAdapter { itemId, position ->
+            if (listAdapter.expandedItems.contains(itemId)) {
+                listAdapter.expandedItems.remove(itemId)
+            } else {
+                listAdapter.expandedItems.add(itemId)
             }
+            listAdapter.notifyItemChanged(position)
+        }
+
+        binding.rvSms.apply {
+            // Use a standard LinearLayoutManager. No reversal needed.
+            layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = listAdapter
         }
     }
@@ -49,7 +49,16 @@ class MainActivity : AppCompatActivity() {
     private fun observeViewModel() {
         lifecycleScope.launch {
             viewModel.listItems.collectLatest { items ->
-                listAdapter.submitList(items)
+                val wasAtTop = (binding.rvSms.layoutManager as LinearLayoutManager)
+                    .findFirstCompletelyVisibleItemPosition() == 0
+
+                listAdapter.submitList(items) {
+                    // After the list is updated, scroll to the top if the user was already there
+                    // or if it's the initial load.
+                    if (wasAtTop || listAdapter.itemCount <= 1) {
+                        binding.rvSms.scrollToPosition(0)
+                    }
+                }
             }
         }
     }

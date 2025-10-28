@@ -17,9 +17,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val listItems: StateFlow<List<ListItem>> = smsDao.getAllSms()
         .map { smsEntityList ->
-            // In the future, we will combine this with failed jobs
             smsEntityList.map { sms ->
-                ListItem.Sms(SmsItem(sms.sender, sms.content, sms.getFormattedTimestamp()))
+                ListItem.Sms(
+                    SmsItem(
+                        id = sms.id,
+                        sender = sms.sender,
+                        content = sms.content,
+                        timestamp = sms.timestamp
+                    )
+                )
             }
         }
         .stateIn(

@@ -10,7 +10,7 @@ interface SmsDao {
     @Insert
     suspend fun insert(sms: SmsEntity): Long
 
-    @Query("SELECT * FROM sms_logs ORDER BY timestamp ASC") // Order by ASC for correct display
+    @Query("SELECT * FROM sms_logs ORDER BY timestamp DESC") // Correct order: newest first
     fun getAllSms(): Flow<List<SmsEntity>>
 
     @Query("SELECT * FROM sms_logs WHERE id = :smsId")

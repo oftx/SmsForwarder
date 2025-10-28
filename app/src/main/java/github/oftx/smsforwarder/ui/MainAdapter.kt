@@ -16,24 +16,45 @@ sealed class ListItem {
     data class RetryJob(val job: ForwardingJobEntity, val ruleName: String) : ListItem()
 }
 
-data class SmsItem(val sender: String, val content: String, val timestamp: String)
+// Add ID for stable tracking of expanded state
+data class SmsItem(val id: Long, val sender: String, val content: String, val timestamp: Long)
 
-class MainAdapter : ListAdapter<ListItem, RecyclerView.ViewHolder>(MainDiffCallback()) {
+class MainAdapter(
+    private val onItemClicked: (Long, Int) -> Unit
+) : ListAdapter<ListItem, RecyclerView.ViewHolder>(MainDiffCallback()) {
 
     companion object {
         private const val TYPE_SMS = 0
         private const val TYPE_RETRY_JOB = 1
     }
 
-    class SmsViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    // State for expanded items
+    val expandedItems = mutableSetOf<Long>()
+
+    inner class SmsViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val senderTextView: TextView = view.findViewById(R.id.tv_sender)
         private val contentTextView: TextView = view.findViewById(R.id.tv_content)
         private val timestampTextView: TextView = view.findViewById(R.id.tv_timestamp)
 
+        init {
+            itemView.setOnClickListener {
+                if (adapterPosition != RecyclerView.NO_POSITION) {
+                    val item = getItem(adapterPosition) as ListItem.Sms
+                    onItemClicked(item.item.id, adapterPosition)
+                }
+            }
+        }
+
         fun bind(smsItem: SmsItem) {
             senderTextView.text = "From: ${smsItem.sender}"
             contentTextView.text = smsItem.content
-            timestampTextView.text = smsItem.timestamp
+
+            // Set timestamp based on expanded state
+            if (expandedItems.contains(smsItem.id)) {
+                timestampTextView.text = TimeUtil.getAbsoluteTime(smsItem.timestamp)
+            } else {
+                timestampTextView.text = TimeUtil.formatDefault(itemView.context, smsItem.timestamp)
+            }
         }
     }
 
@@ -50,11 +71,7 @@ class MainAdapter : ListAdapter<ListItem, RecyclerView.ViewHolder>(MainDiffCallb
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            TYPE_SMS -> {
-                val view = LayoutInflater.from(parent.context).inflate(R.layout.item_sms_log, parent, false)
-                SmsViewHolder(view)
-            }
-            // Add layout for TYPE_RETRY_JOB later
+            TYPE_SMS -> SmsViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_sms_log, parent, false))
             else -> throw IllegalArgumentException("Invalid view type: $viewType")
         }
     }
@@ -62,9 +79,7 @@ class MainAdapter : ListAdapter<ListItem, RecyclerView.ViewHolder>(MainDiffCallb
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val currentItem = getItem(position)) {
             is ListItem.Sms -> (holder as SmsViewHolder).bind(currentItem.item)
-            is ListItem.RetryJob -> {
-                // Bind data for RetryJobViewHolder here
-            }
+            is ListItem.RetryJob -> { /* Bind retry job holder */ }
         }
     }
 }
@@ -72,7 +87,7 @@ class MainAdapter : ListAdapter<ListItem, RecyclerView.ViewHolder>(MainDiffCallb
 class MainDiffCallback : DiffUtil.ItemCallback<ListItem>() {
     override fun areItemsTheSame(oldItem: ListItem, newItem: ListItem): Boolean {
         return when {
-            oldItem is ListItem.Sms && newItem is ListItem.Sms -> oldItem.item.timestamp == newItem.item.timestamp && oldItem.item.content == newItem.item.content
+            oldItem is ListItem.Sms && newItem is ListItem.Sms -> oldItem.item.id == newItem.item.id
             oldItem is ListItem.RetryJob && newItem is ListItem.RetryJob -> oldItem.job.id == newItem.job.id
             else -> false
         }
