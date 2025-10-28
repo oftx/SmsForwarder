@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_copy_logs"
+        android:icon="@drawable/ic_copy"
+        android:title="复制全部"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_clear_logs"
+        android:icon="@drawable/ic_delete"
+        android:title="清空日志"
+        app:showAsAction="ifRoom" />
+</menu>

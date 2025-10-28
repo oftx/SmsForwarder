@@ -5,6 +5,7 @@ import androidx.preference.PreferenceManager
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import github.oftx.smsforwarder.AppDatabase
+import github.oftx.smsforwarder.AppLogger
 import github.oftx.smsforwarder.database.BarkConfig
 import github.oftx.smsforwarder.database.ForwarderRule
 import github.oftx.smsforwarder.database.JobStatus
@@ -23,12 +24,12 @@ import java.util.concurrent.TimeUnit
 data class BarkPayload(val body: String, val title: String, val group: String = "SmsForwarder")
 
 class SmsForwardWorker(
-    appContext: Context,
+    private val appContext: Context,
     params: WorkerParameters
 ) : CoroutineWorker(appContext, params) {
 
-    private val db = AppDatabase.getDatabase(applicationContext)
-    private val smsDao = db.smsDao()
+    private val db = AppDatabase.getDatabase(appContext)
+    private val smsDao = db.smsDao() // <-- THIS LINE WAS MISSING
     private val ruleDao = db.forwarderRuleDao()
     private val jobDao = db.forwardingJobDao()
 
@@ -39,21 +40,36 @@ class SmsForwardWorker(
 
     override suspend fun doWork(): Result {
         val jobId = inputData.getLong("job_id", -1L)
-        if (jobId == -1L) return Result.failure()
+        if (jobId == -1L) {
+            AppLogger.suspendLog(appContext, "[Worker] FATAL: Worker started with invalid job ID.")
+            return Result.failure()
+        }
 
-        val job = jobDao.getJobById(jobId) ?: return Result.success()
-        val rule = ruleDao.getRuleById(job.ruleId) ?: return Result.failure()
-        val sms = smsDao.getSmsById(job.smsId) ?: return Result.failure()
+        AppLogger.suspendLog(appContext, "[Worker] Starting job $jobId.")
+
+        val job = jobDao.getJobById(jobId) ?: run {
+            AppLogger.suspendLog(appContext, "[Worker] Job $jobId not found in DB (possibly cancelled). Stopping.")
+            return Result.success()
+        }
+        val rule = ruleDao.getRuleById(job.ruleId) ?: run {
+            AppLogger.suspendLog(appContext, "[Worker] Rule ${job.ruleId} for job $jobId not found. Failing.")
+            return Result.failure()
+        }
+        val sms = smsDao.getSmsById(job.smsId) ?: run {
+            AppLogger.suspendLog(appContext, "[Worker] SMS ${job.smsId} for job $jobId not found. Failing.")
+            return Result.failure()
+        }
 
         return try {
             when (rule.type) {
                 ForwarderRule.TYPE_BARK -> forwardToBark(rule, sms)
-                else -> throw IllegalArgumentException("Unsupported rule type")
+                else -> throw IllegalArgumentException("Unsupported rule type: ${rule.type}")
             }
+            AppLogger.suspendLog(appContext, "[Worker] Job $jobId to '${rule.name}' completed successfully.")
             jobDao.updateStatus(jobId, JobStatus.SUCCESS.value)
             Result.success()
         } catch (e: Exception) {
-            handleFailure(jobId, e.message ?: "Unknown error")
+            handleFailure(jobId, e.message ?: "Unknown error", rule.name)
         }
     }
 
@@ -68,31 +84,17 @@ class SmsForwardWorker(
         val request: Request
 
         if (config.isEncrypted && !config.encryptionKey.isNullOrBlank() && !config.mode.isNullOrBlank()) {
-            // Encrypted Request
             val iv = config.iv.orEmpty()
             val ciphertext = CryptoUtils.encrypt(
-                payload = payloadJson,
-                mode = config.mode,
-                key = config.encryptionKey,
-                iv = iv
+                payload = payloadJson, mode = config.mode, key = config.encryptionKey, iv = iv
             )
-
-            val formBodyBuilder = FormBody.Builder()
-                .add("ciphertext", ciphertext)
-
-            // Only add IV if it's not empty and mode requires it
+            val formBodyBuilder = FormBody.Builder().add("ciphertext", ciphertext)
             if (iv.isNotEmpty() && (config.mode == BarkConfig.MODE_CBC || config.mode == BarkConfig.MODE_GCM)) {
                  formBodyBuilder.add("iv", iv)
             }
-
-            request = Request.Builder()
-                .url(url)
-                .post(formBodyBuilder.build())
-                .build()
+            request = Request.Builder().url(url).post(formBodyBuilder.build()).build()
         } else {
-            // Unencrypted Request
-            request = Request.Builder()
-                .url(url)
+            request = Request.Builder().url(url)
                 .post(payloadJson.toRequestBody("application/json; charset=utf-8".toMediaType()))
                 .build()
         }
@@ -103,13 +105,20 @@ class SmsForwardWorker(
         }
     }
 
-    private suspend fun handleFailure(jobId: Long, errorMessage: String): Result {
-        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+    private suspend fun handleFailure(jobId: Long, errorMessage: String, ruleName: String): Result {
+        AppLogger.suspendLog(appContext, "[Worker] Job $jobId to '$ruleName' FAILED. Reason: $errorMessage")
+        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(appContext)
         val shouldRetry = sharedPrefs.getBoolean("pref_retry_on_fail", true)
 
         val newStatus = if (shouldRetry) JobStatus.FAILED_RETRY.value else JobStatus.FAILED_PERMANENTLY.value
         jobDao.updateStatusForFailure(jobId, newStatus, errorMessage, System.currentTimeMillis())
 
-        return if (shouldRetry) Result.retry() else Result.failure()
+        if (shouldRetry) {
+            AppLogger.suspendLog(appContext, "[Worker] Scheduling retry for job $jobId.")
+            return Result.retry()
+        } else {
+            AppLogger.suspendLog(appContext, "[Worker] Job $jobId will not be retried.")
+            return Result.failure()
+        }
     }
 }

@@ -8,6 +8,7 @@ import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
 import github.oftx.smsforwarder.AppDatabase
+import github.oftx.smsforwarder.AppLogger
 import github.oftx.smsforwarder.R
 import github.oftx.smsforwarder.database.BarkConfig
 import github.oftx.smsforwarder.database.ForwarderRule
@@ -52,24 +53,18 @@ class BarkConfigActivity : AppCompatActivity() {
     }
 
     private fun setupEncryptionViews() {
-        // Populate dropdowns
         val algorithms = resources.getStringArray(R.array.encryption_algorithms)
         val modes = resources.getStringArray(R.array.encryption_modes)
         binding.dropdownAlgorithm.setAdapter(ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, algorithms))
         binding.dropdownMode.setAdapter(ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modes))
-
-        // Set default selections
         binding.dropdownAlgorithm.setText(BarkConfig.ALGORITHM_AES_128, false)
         binding.dropdownMode.setText(BarkConfig.MODE_CBC, false)
-
-        // Toggle visibility
         binding.switchEncryption.setOnCheckedChangeListener { _, isChecked ->
             binding.layoutEncryptionOptions.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
     }
 
     private fun setupValidation() {
-        // Link algorithm dropdown to key length
         binding.editTextEncryptionKey.doOnTextChanged { text, _, _, _ ->
             val byteSize = text?.toString()?.toByteArray(Charsets.UTF_8)?.size ?: 0
             val newAlgorithm = when (byteSize) {
@@ -87,8 +82,6 @@ class BarkConfigActivity : AppCompatActivity() {
                 binding.layoutEncryptionKey.error = null
             }
         }
-
-        // Adjust IV field based on selected mode
         binding.dropdownMode.doOnTextChanged { text, _, _, _ ->
             when (text.toString()) {
                 BarkConfig.MODE_CBC -> {
@@ -157,35 +150,28 @@ class BarkConfigActivity : AppCompatActivity() {
             }
             if (mode == BarkConfig.MODE_GCM && iv.toByteArray(Charsets.UTF_8).size != 12) {
                 Snackbar.make(binding.root, "GCM模式下IV长度推荐为12字节", Snackbar.LENGTH_SHORT).show()
-                // This is a recommendation, not a strict failure
             }
         }
 
         val config = BarkConfig(
-            key = barkKey,
-            isEncrypted = isEncrypted,
-            algorithm = algorithm,
-            mode = mode,
-            encryptionKey = encryptionKey,
-            iv = iv
+            key = barkKey, isEncrypted = isEncrypted, algorithm = algorithm,
+            mode = mode, encryptionKey = encryptionKey, iv = iv
         )
         val configJson = Json.encodeToString(config)
 
         lifecycleScope.launch {
-            val ruleToSave = existingRule?.copy(
-                name = name,
-                configJson = configJson
-            ) ?: ForwarderRule(
-                name = name,
-                type = ForwarderRule.TYPE_BARK,
-                configJson = configJson,
-                isEnabled = true
-            )
-
+            val ruleToSave: ForwarderRule
             if (existingRule != null) {
+                ruleToSave = existingRule!!.copy(name = name, configJson = configJson)
                 db.forwarderRuleDao().update(ruleToSave)
+                AppLogger.log(this@BarkConfigActivity, "Updated rule '${ruleToSave.name}'.")
             } else {
+                ruleToSave = ForwarderRule(
+                    name = name, type = ForwarderRule.TYPE_BARK,
+                    configJson = configJson, isEnabled = true
+                )
                 db.forwarderRuleDao().insert(ruleToSave)
+                AppLogger.log(this@BarkConfigActivity, "Created new rule '${ruleToSave.name}'.")
             }
 
             Snackbar.make(binding.root, "保存成功", Snackbar.LENGTH_SHORT).show()

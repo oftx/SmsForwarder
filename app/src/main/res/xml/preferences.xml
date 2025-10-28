@@ -4,4 +4,9 @@
         app:title="转发失败后重试"
         app:summary="当网络或目标服务器出现问题时，自动在后台重新发送"
         app:defaultValue="true" />
+
+    <Preference
+        app:key="pref_view_logs"
+        app:title="查看日志"
+        app:summary="打开应用和转发日志记录" />
 </PreferenceScreen>
