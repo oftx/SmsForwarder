@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -20,6 +21,9 @@ class ForwarderListActivity : AppCompatActivity() {
     private lateinit var ruleAdapter: ForwarderRuleAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.applyTheme(this)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         super.onCreate(savedInstanceState)
         binding = ActivityForwarderListBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -30,7 +34,6 @@ class ForwarderListActivity : AppCompatActivity() {
         observeRules()
 
         binding.fabAddRule.setOnClickListener {
-            // Start BarkConfigActivity in "add mode" (no ID passed)
             startActivity(Intent(this, BarkConfigActivity::class.java))
         }
     }
@@ -42,7 +45,6 @@ class ForwarderListActivity : AppCompatActivity() {
                 viewModel.updateRule(updatedRule)
             },
             onItemClicked = { rule ->
-                // Start BarkConfigActivity in "edit mode" by passing the rule ID
                 val intent = Intent(this, BarkConfigActivity::class.java)
                 intent.putExtra(BarkConfigActivity.EXTRA_RULE_ID, rule.id)
                 startActivity(intent)
@@ -51,7 +53,6 @@ class ForwarderListActivity : AppCompatActivity() {
                 showDeleteConfirmationDialog(rule)
             }
         )
-
         binding.recyclerViewRules.apply {
             adapter = ruleAdapter
             layoutManager = LinearLayoutManager(this@ForwarderListActivity)

@@ -13,6 +13,14 @@
             app:summary="打开应用和转发日志记录" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="外观">
+        <SwitchPreferenceCompat
+            app:key="pref_monet_theme"
+            app:title="莫奈取色"
+            app:summary="跟随系统壁纸颜色 (Android 12+)"
+            app:defaultValue="true" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="数据管理">
         <EditTextPreference
             app:key="pref_sms_limit"

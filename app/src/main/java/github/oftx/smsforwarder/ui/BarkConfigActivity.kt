@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -30,6 +31,9 @@ class BarkConfigActivity : AppCompatActivity() {
     private var isUpdating = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.applyTheme(this)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         super.onCreate(savedInstanceState)
         binding = ActivityBarkConfigBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -82,10 +86,8 @@ class BarkConfigActivity : AppCompatActivity() {
         val modes = resources.getStringArray(R.array.encryption_modes)
         binding.dropdownAlgorithm.setAdapter(ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, algorithms))
         binding.dropdownMode.setAdapter(ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modes))
-
         binding.dropdownAlgorithm.setText(BarkConfig.ALGORITHM_AES_128, false)
         binding.dropdownMode.setText(BarkConfig.MODE_CBC, false)
-
         binding.switchEncryption.setOnCheckedChangeListener { _, isChecked ->
             binding.layoutEncryptionOptions.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
@@ -109,7 +111,6 @@ class BarkConfigActivity : AppCompatActivity() {
                 binding.layoutEncryptionKey.error = null
             }
         }
-
         binding.dropdownMode.doOnTextChanged { text, _, _, _ ->
             when (text.toString()) {
                 BarkConfig.MODE_CBC -> {
@@ -131,18 +132,15 @@ class BarkConfigActivity : AppCompatActivity() {
     private fun saveRule() {
         val name = binding.editTextRuleName.text.toString().trim()
         val barkKey = binding.editTextBarkKey.text.toString().trim()
-
         if (name.isEmpty() || barkKey.isEmpty()) {
             Snackbar.make(binding.root, "名称和Bark Key不能为空", Snackbar.LENGTH_SHORT).show()
             return
         }
-
         val isEncrypted = binding.switchEncryption.isChecked
         var encryptionKey: String? = null
         var iv: String? = null
         var algorithm: String? = null
         var mode: String? = null
-
         if (isEncrypted) {
             encryptionKey = binding.editTextEncryptionKey.text.toString()
             val keyByteSize = encryptionKey.toByteArray(Charsets.UTF_8).size
@@ -153,28 +151,23 @@ class BarkConfigActivity : AppCompatActivity() {
             iv = binding.editTextIv.text.toString()
             algorithm = binding.dropdownAlgorithm.text.toString()
             mode = binding.dropdownMode.text.toString()
-
             if (mode == BarkConfig.MODE_CBC && iv.toByteArray(Charsets.UTF_8).size != 16) {
                 Snackbar.make(binding.root, "CBC模式下IV长度必须为16字节", Snackbar.LENGTH_SHORT).show()
                 return
             }
         }
-
         val config = BarkConfig(
             key = barkKey, isEncrypted = isEncrypted, algorithm = algorithm,
             mode = mode, encryptionKey = encryptionKey, iv = iv
         )
         val configJson = Json.encodeToString(config)
-
         val ruleToSave = if (isUpdating) {
             viewModel.existingRule.value!!.copy(name = name, configJson = configJson)
         } else {
             ForwarderRule(name = name, type = ForwarderRule.TYPE_BARK, configJson = configJson, isEnabled = true)
         }
-
         viewModel.saveRule(ruleToSave, isUpdating)
         AppLogger.log(this, if(isUpdating) "Updated rule '${ruleToSave.name}'." else "Created new rule '${ruleToSave.name}'.")
-
         Snackbar.make(binding.root, "保存成功", Snackbar.LENGTH_SHORT).show()
         finish()
     }

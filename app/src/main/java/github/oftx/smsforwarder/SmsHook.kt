@@ -23,7 +23,6 @@ class SmsHook : IXposedHookLoadPackage {
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
         if (lpparam.packageName == "com.android.mms") {
             hookApplication(lpparam)
-            hookSmsMessage(lpparam)
         }
     }
 
@@ -32,8 +31,12 @@ class SmsHook : IXposedHookLoadPackage {
             Application::class.java, "onCreate", object : XC_MethodHook() {
                 override fun afterHookedMethod(param: MethodHookParam) {
                     val context = param.thisObject as? Context ?: return
-                    moduleContext = context
-                    AppLogger.logFromHook(context, "Successfully got context from [${lpparam.processName}]")
+                    if (moduleContext == null) {
+                        moduleContext = context.applicationContext
+                        AppLogger.logFromHook(context, "Successfully got context from [${lpparam.processName}]")
+                        // Hook SMS method only after getting context
+                        hookSmsMessage(lpparam)
+                    }
                 }
             }
         )
@@ -42,7 +45,6 @@ class SmsHook : IXposedHookLoadPackage {
     private fun hookSmsMessage(lpparam: LoadPackageParam) {
         val context = moduleContext
         if (context == null) {
-            // This is unlikely if onCreate hook worked, but as a safeguard.
             XposedBridge.log("SmsFwd-Hook-FATAL: Cannot hook SMS methods, moduleContext is null.")
             return
         }

@@ -72,7 +72,7 @@ class SmsProvider : ContentProvider() {
         val newSmsId = runBlocking {
             AppLogger.suspendLog(context!!, "[Provider] Received SMS from $sender, saving to DB.")
             val insertedId = db.smsDao().insert(newSms)
-            enforceSmsLimit() // Enforce limit after insert
+            enforceSmsLimit()
             insertedId
         }
         if (newSmsId > 0) {

@@ -1,12 +1,14 @@
 package github.oftx.smsforwarder.ui
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import github.oftx.smsforwarder.R
 
@@ -19,33 +21,38 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
-        // Find the preferences we need to customize
+        val monetPref = findPreference<SwitchPreferenceCompat>("pref_monet_theme")
         val smsLimitPref = findPreference<EditTextPreference>("pref_sms_limit")
         val clearSmsPref = findPreference<Preference>("pref_clear_sms")
         val viewLogsPref = findPreference<Preference>("pref_view_logs")
 
-        // 1. Set a dynamic summary for the SMS limit preference
+        // 1. Monet/Dynamic Color Preference
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            monetPref?.setOnPreferenceChangeListener { _, _ ->
+                // The value is saved automatically. We just need to restart the activity.
+                activity?.recreate()
+                true
+            }
+        } else {
+            // Hide the setting on older Android versions
+            monetPref?.isVisible = false
+        }
+
+        // 2. SMS Limit Preference
         smsLimitPref?.summaryProvider = Preference.SummaryProvider<EditTextPreference> { preference ->
             val text = preference.text
             val value = text?.toIntOrNull() ?: -1
-            if (value <= 0) {
-                "无上限"
-            } else {
-                "$value 条消息"
-            }
+            if (value <= 0) "无上限" else "$value 条消息"
         }
-
-        // 2. Set a placeholder hint inside the preference's dialog
         smsLimitPref?.setOnBindEditTextListener { editText ->
             editText.hint = "设置为 -1 或 0 则无上限"
         }
 
-        // Use specific click listeners for better practice
+        // 3. Click listeners
         viewLogsPref?.setOnPreferenceClickListener {
             startActivity(Intent(requireContext(), LogActivity::class.java))
             true
         }
-
         clearSmsPref?.setOnPreferenceClickListener {
             showClearSmsConfirmationDialog()
             true

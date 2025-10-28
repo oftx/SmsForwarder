@@ -6,6 +6,7 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import github.oftx.smsforwarder.R
@@ -20,6 +21,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var listAdapter: MainAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Apply theme and edge-to-edge BEFORE super.onCreate()
+        ThemeManager.applyTheme(this)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -38,9 +43,7 @@ class MainActivity : AppCompatActivity() {
             }
             listAdapter.notifyItemChanged(position)
         }
-
         binding.rvSms.apply {
-            // Use a standard LinearLayoutManager. No reversal needed.
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = listAdapter
         }
@@ -51,10 +54,7 @@ class MainActivity : AppCompatActivity() {
             viewModel.listItems.collectLatest { items ->
                 val wasAtTop = (binding.rvSms.layoutManager as LinearLayoutManager)
                     .findFirstCompletelyVisibleItemPosition() == 0
-
                 listAdapter.submitList(items) {
-                    // After the list is updated, scroll to the top if the user was already there
-                    // or if it's the initial load.
                     if (wasAtTop || listAdapter.itemCount <= 1) {
                         binding.rvSms.scrollToPosition(0)
                     }
