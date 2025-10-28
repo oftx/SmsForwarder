@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- The key size determines the algorithm, so this is for user clarity -->
     <string-array name="encryption_algorithms">
-        <item>AES/CBC</item>
-        <item>AES/ECB</item>
+        <item>AES-128</item>
+        <item>AES-192</item>
+        <item>AES-256</item>
+    </string-array>
+    <string-array name="encryption_modes">
+        <item>CBC</item>
+        <item>ECB</item>
+        <item>GCM</item>
     </string-array>
 </resources>

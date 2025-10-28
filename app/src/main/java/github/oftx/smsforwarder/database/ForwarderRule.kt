@@ -21,12 +21,18 @@ data class ForwarderRule(
 data class BarkConfig(
     val key: String,
     val isEncrypted: Boolean = false,
-    val algorithm: String? = ALGORITHM_AES_CBC, // e.g. "AES/CBC"
+    val algorithm: String? = ALGORITHM_AES_128,
+    val mode: String? = MODE_CBC,
     val encryptionKey: String? = null,
     val iv: String? = null
 ) {
     companion object {
-        const val ALGORITHM_AES_CBC = "AES/CBC"
-        const val ALGORITHM_AES_ECB = "AES/ECB"
+        const val ALGORITHM_AES_128 = "AES-128"
+        const val ALGORITHM_AES_192 = "AES-192"
+        const val ALGORITHM_AES_256 = "AES-256"
+
+        const val MODE_CBC = "CBC"
+        const val MODE_ECB = "ECB"
+        const val MODE_GCM = "GCM"
     }
 }

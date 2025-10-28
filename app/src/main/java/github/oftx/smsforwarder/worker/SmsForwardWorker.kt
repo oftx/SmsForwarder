@@ -67,21 +67,21 @@ class SmsForwardWorker(
 
         val request: Request
 
-        if (config.isEncrypted && !config.encryptionKey.isNullOrBlank()) {
+        if (config.isEncrypted && !config.encryptionKey.isNullOrBlank() && !config.mode.isNullOrBlank()) {
             // Encrypted Request
             val iv = config.iv.orEmpty()
             val ciphertext = CryptoUtils.encrypt(
                 payload = payloadJson,
-                algorithm = config.algorithm ?: BarkConfig.ALGORITHM_AES_CBC,
+                mode = config.mode,
                 key = config.encryptionKey,
                 iv = iv
             )
 
             val formBodyBuilder = FormBody.Builder()
                 .add("ciphertext", ciphertext)
-            
-            // Only add IV if it's not empty and mode is CBC
-            if (iv.isNotEmpty() && config.algorithm == BarkConfig.ALGORITHM_AES_CBC) {
+
+            // Only add IV if it's not empty and mode requires it
+            if (iv.isNotEmpty() && (config.mode == BarkConfig.MODE_CBC || config.mode == BarkConfig.MODE_GCM)) {
                  formBodyBuilder.add("iv", iv)
             }
 

@@ -64,29 +64,49 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="16dp">
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp">
                 <AutoCompleteTextView
                     android:id="@+id/dropdown_algorithm"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="none"
-                    android:hint="算法/模式/填充" />
+                    android:hint="算法 (由密钥长度决定)" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp">
+                <AutoCompleteTextView
+                    android:id="@+id/dropdown_mode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:hint="模式" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_encryption_key"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
                 android:layout_marginEnd="16dp">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/edit_text_encryption_key"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Key (密钥, 16/24/32位)" />
+                    android:hint="Key (密钥)" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layout_iv"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -95,7 +115,7 @@
                     android:id="@+id/edit_text_iv"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="IV (偏移量, 16位)" />
+                    android:hint="IV (偏移量)" />
             </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>

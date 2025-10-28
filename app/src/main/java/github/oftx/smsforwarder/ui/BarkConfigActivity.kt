@@ -40,10 +40,10 @@ class BarkConfigActivity : AppCompatActivity() {
         ruleId = intent.getLongExtra(EXTRA_RULE_ID, -1L)
 
         if (ruleId != -1L) {
-            supportActionBar?.title = "编辑Bark规则"
+            supportActionBar?.title = "编辑 Bark 规则"
             loadExistingRuleData()
         } else {
-            supportActionBar?.title = "添加Bark规则"
+            supportActionBar?.title = "添加 Bark 规则"
         }
 
         binding.buttonSave.setOnClickListener {
@@ -52,37 +52,57 @@ class BarkConfigActivity : AppCompatActivity() {
     }
 
     private fun setupEncryptionViews() {
-        // Populate dropdown
+        // Populate dropdowns
         val algorithms = resources.getStringArray(R.array.encryption_algorithms)
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, algorithms)
-        binding.dropdownAlgorithm.setAdapter(adapter)
+        val modes = resources.getStringArray(R.array.encryption_modes)
+        binding.dropdownAlgorithm.setAdapter(ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, algorithms))
+        binding.dropdownMode.setAdapter(ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, modes))
 
-        // Set default selection
-        binding.dropdownAlgorithm.setText(BarkConfig.ALGORITHM_AES_CBC, false)
+        // Set default selections
+        binding.dropdownAlgorithm.setText(BarkConfig.ALGORITHM_AES_128, false)
+        binding.dropdownMode.setText(BarkConfig.MODE_CBC, false)
 
         // Toggle visibility
         binding.switchEncryption.setOnCheckedChangeListener { _, isChecked ->
             binding.layoutEncryptionOptions.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
-
-        // IV is only needed for CBC mode
-        binding.dropdownAlgorithm.doOnTextChanged { text, _, _, _ ->
-            binding.editTextIv.isEnabled = text.toString() == BarkConfig.ALGORITHM_AES_CBC
-            if (!binding.editTextIv.isEnabled) {
-                binding.editTextIv.text?.clear()
-            }
-        }
     }
 
     private fun setupValidation() {
+        // Link algorithm dropdown to key length
         binding.editTextEncryptionKey.doOnTextChanged { text, _, _, _ ->
             val byteSize = text?.toString()?.toByteArray(Charsets.UTF_8)?.size ?: 0
-            if (text.isNullOrEmpty()) {
-                binding.editTextEncryptionKey.error = null
-            } else if (byteSize !in listOf(16, 24, 32)) {
-                binding.editTextEncryptionKey.error = "密钥长度必须为 16, 24, 或 32 字节 (当前: $byteSize)"
+            val newAlgorithm = when (byteSize) {
+                16 -> BarkConfig.ALGORITHM_AES_128
+                24 -> BarkConfig.ALGORITHM_AES_192
+                32 -> BarkConfig.ALGORITHM_AES_256
+                else -> null
+            }
+            if (newAlgorithm != null) {
+                binding.dropdownAlgorithm.setText(newAlgorithm, false)
+                binding.layoutEncryptionKey.error = null
+            } else if (!text.isNullOrEmpty()) {
+                binding.layoutEncryptionKey.error = "密钥长度必须为 16, 24, 或 32 字节 (当前: $byteSize)"
             } else {
-                binding.editTextEncryptionKey.error = null
+                binding.layoutEncryptionKey.error = null
+            }
+        }
+
+        // Adjust IV field based on selected mode
+        binding.dropdownMode.doOnTextChanged { text, _, _, _ ->
+            when (text.toString()) {
+                BarkConfig.MODE_CBC -> {
+                    binding.layoutIv.visibility = View.VISIBLE
+                    binding.layoutIv.hint = "IV (16字节)"
+                }
+                BarkConfig.MODE_GCM -> {
+                    binding.layoutIv.visibility = View.VISIBLE
+                    binding.layoutIv.hint = "IV / Nonce (推荐12字节)"
+                }
+                BarkConfig.MODE_ECB -> {
+                    binding.layoutIv.visibility = View.GONE
+                    binding.editTextIv.text?.clear()
+                }
             }
         }
     }
@@ -96,7 +116,8 @@ class BarkConfigActivity : AppCompatActivity() {
                 binding.editTextBarkKey.setText(config.key)
                 binding.switchEncryption.isChecked = config.isEncrypted
                 if (config.isEncrypted) {
-                    binding.dropdownAlgorithm.setText(config.algorithm ?: BarkConfig.ALGORITHM_AES_CBC, false)
+                    binding.dropdownAlgorithm.setText(config.algorithm ?: BarkConfig.ALGORITHM_AES_128, false)
+                    binding.dropdownMode.setText(config.mode ?: BarkConfig.MODE_CBC, false)
                     binding.editTextEncryptionKey.setText(config.encryptionKey)
                     binding.editTextIv.setText(config.iv)
                 }
@@ -117,6 +138,7 @@ class BarkConfigActivity : AppCompatActivity() {
         var encryptionKey: String? = null
         var iv: String? = null
         var algorithm: String? = null
+        var mode: String? = null
 
         if (isEncrypted) {
             encryptionKey = binding.editTextEncryptionKey.text.toString()
@@ -127,9 +149,15 @@ class BarkConfigActivity : AppCompatActivity() {
             }
             iv = binding.editTextIv.text.toString()
             algorithm = binding.dropdownAlgorithm.text.toString()
-            if (algorithm == BarkConfig.ALGORITHM_AES_CBC && iv.toByteArray(Charsets.UTF_8).size != 16) {
+            mode = binding.dropdownMode.text.toString()
+
+            if (mode == BarkConfig.MODE_CBC && iv.toByteArray(Charsets.UTF_8).size != 16) {
                 Snackbar.make(binding.root, "CBC模式下IV长度必须为16字节", Snackbar.LENGTH_SHORT).show()
                 return
+            }
+            if (mode == BarkConfig.MODE_GCM && iv.toByteArray(Charsets.UTF_8).size != 12) {
+                Snackbar.make(binding.root, "GCM模式下IV长度推荐为12字节", Snackbar.LENGTH_SHORT).show()
+                // This is a recommendation, not a strict failure
             }
         }
 
@@ -137,6 +165,7 @@ class BarkConfigActivity : AppCompatActivity() {
             key = barkKey,
             isEncrypted = isEncrypted,
             algorithm = algorithm,
+            mode = mode,
             encryptionKey = encryptionKey,
             iv = iv
         )
