@@ -6,6 +6,7 @@ import android.content.ContentValues
 import android.content.UriMatcher
 import android.database.Cursor
 import android.net.Uri
+import androidx.preference.PreferenceManager
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
@@ -52,13 +53,10 @@ class SmsProvider : ContentProvider() {
                 else -> throw IllegalArgumentException("Unknown URI: $uri")
             }
         } catch (e: Exception) {
-            // If any insert fails, log it to the database itself.
-            // This creates a recursive loop if DB insertion is the problem, but it's a useful fallback.
             runBlocking {
                 try {
                     db.logDao().insert(LogEntity(message = "[Provider-FATAL] Insert failed for URI $uri: ${e.message}"))
                 } catch (dbError: Exception) {
-                    // Total failure, log to logcat
                     android.util.Log.e("SmsFwd-Provider", "FATAL: Could not even write error log to DB.", dbError)
                 }
             }
@@ -73,7 +71,9 @@ class SmsProvider : ContentProvider() {
 
         val newSmsId = runBlocking {
             AppLogger.suspendLog(context!!, "[Provider] Received SMS from $sender, saving to DB.")
-            db.smsDao().insert(newSms)
+            val insertedId = db.smsDao().insert(newSms)
+            enforceSmsLimit() // Enforce limit after insert
+            insertedId
         }
         if (newSmsId > 0) {
             scheduleForwarding(newSmsId)
@@ -107,6 +107,17 @@ class SmsProvider : ContentProvider() {
                     .setInputData(workDataOf("job_id" to jobId)).build()
                 WorkManager.getInstance(context!!).enqueue(workRequest)
             }
+        }
+    }
+
+    private suspend fun enforceSmsLimit() {
+        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context!!)
+        val limitStr = sharedPrefs.getString("pref_sms_limit", "-1")
+        val limit = limitStr?.toIntOrNull() ?: -1
+
+        if (limit > 0) {
+            AppLogger.suspendLog(context!!, "[Provider] Enforcing SMS limit of $limit records.")
+            db.smsDao().enforceLimit(limit)
         }
     }
 

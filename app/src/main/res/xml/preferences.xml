@@ -1,12 +1,29 @@
-<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
-    <SwitchPreferenceCompat
-        app:key="pref_retry_on_fail"
-        app:title="转发失败后重试"
-        app:summary="当网络或目标服务器出现问题时，自动在后台重新发送"
-        app:defaultValue="true" />
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <Preference
-        app:key="pref_view_logs"
-        app:title="查看日志"
-        app:summary="打开应用和转发日志记录" />
+    <PreferenceCategory app:title="常规">
+        <SwitchPreferenceCompat
+            app:key="pref_retry_on_fail"
+            app:title="转发失败后重试"
+            app:summary="当网络或目标服务器出现问题时，自动在后台重新发送"
+            app:defaultValue="true" />
+        <Preference
+            app:key="pref_view_logs"
+            app:title="查看日志"
+            app:summary="打开应用和转发日志记录" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="数据管理">
+        <EditTextPreference
+            app:key="pref_sms_limit"
+            app:title="信息保存数量上限"
+            app:defaultValue="-1"
+            app:dialogTitle="输入数量上限"
+            android:inputType="numberSigned" />
+        <Preference
+            app:key="pref_clear_sms"
+            app:title="清空所有消息"
+            app:summary="删除所有已保存的短信记录" />
+    </PreferenceCategory>
+
 </PreferenceScreen>
