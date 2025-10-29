@@ -10,7 +10,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.fragment.app.viewModels
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
@@ -20,6 +20,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import github.oftx.smsforwarder.R
+import kotlinx.coroutines.launch
 
 class SettingsFragment : PreferenceFragmentCompat() {
 
@@ -40,8 +41,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // 1. Monet/Dynamic Color Preference
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             monetPref?.setOnPreferenceChangeListener { _, _ ->
-                // Use post to delay the broadcast, ensuring the preference value is saved before recreation
-                view?.post { sendRecreateBroadcast() }
+                // Use post to delay, ensuring the preference value is saved before recreation
+                view?.post { triggerRecreate() }
                 true
             }
         } else {
@@ -50,8 +51,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         // 2. Language Preference
         languagePref?.setOnPreferenceChangeListener { _, _ ->
-            // Use post to delay the broadcast, ensuring the preference value is saved before recreation
-            view?.post { sendRecreateBroadcast() }
+            // Use post to delay, ensuring the preference value is saved before recreation
+            view?.post { triggerRecreate() }
             true
         }
 
@@ -85,9 +86,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun sendRecreateBroadcast() {
-        val intent = Intent(BaseActivity.ACTION_RECREATE_ACTIVITIES)
-        LocalBroadcastManager.getInstance(requireContext()).sendBroadcast(intent)
+    private fun triggerRecreate() {
+        lifecycleScope.launch {
+            RecreateHandler.triggerRecreate()
+        }
     }
 
     private fun openBatterySettings() {
