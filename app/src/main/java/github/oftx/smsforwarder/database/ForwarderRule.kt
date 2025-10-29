@@ -20,6 +20,7 @@ data class ForwarderRule(
 @Serializable
 data class BarkConfig(
     val key: String,
+    val serverUrl: String? = null,
     val isEncrypted: Boolean = false,
     val algorithm: String? = ALGORITHM_AES_128,
     val mode: String? = MODE_CBC,

@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import androidx.activity.viewModels
-import androidx.core.view.WindowCompat
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -68,6 +67,7 @@ class BarkConfigActivity : BaseActivity() {
         binding.editTextRuleName.setText(rule.name)
         val config = Json.decodeFromString<BarkConfig>(rule.configJson)
         binding.editTextBarkKey.setText(config.key)
+        binding.editTextServerUrl.setText(config.serverUrl)
         binding.switchEncryption.isChecked = config.isEncrypted
         if (config.isEncrypted) {
             binding.dropdownAlgorithm.setText(config.algorithm ?: BarkConfig.ALGORITHM_AES_128, false)
@@ -128,6 +128,8 @@ class BarkConfigActivity : BaseActivity() {
     private fun saveRule() {
         val name = binding.editTextRuleName.text.toString().trim()
         val barkKey = binding.editTextBarkKey.text.toString().trim()
+        val serverUrl = binding.editTextServerUrl.text.toString().trim()
+
         if (name.isEmpty() || barkKey.isEmpty()) {
             Snackbar.make(binding.root, R.string.error_name_and_key_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
             return
@@ -153,7 +155,7 @@ class BarkConfigActivity : BaseActivity() {
             }
         }
         val config = BarkConfig(
-            key = barkKey, isEncrypted = isEncrypted, algorithm = algorithm,
+            key = barkKey, serverUrl = serverUrl, isEncrypted = isEncrypted, algorithm = algorithm,
             mode = mode, encryptionKey = encryptionKey, iv = iv
         )
         val configJson = Json.encodeToString(config)

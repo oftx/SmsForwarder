@@ -27,6 +27,7 @@
     <string name="bark_config_title_edit">编辑 Bark 规则</string>
     <string name="hint_rule_name">规则名称 (例如 我的iPhone)</string>
     <string name="hint_bark_key">Bark Key (Device Key)</string>
+    <string name="hint_bark_server_url">Bark 服务器地址 (例如 https://your.bark.server)</string>
     <string name="push_encryption">推送加密</string>
     <string name="encryption_algorithm">算法 (由密钥长度决定)</string>
     <string name="encryption_mode">模式</string>

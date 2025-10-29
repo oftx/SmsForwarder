@@ -78,7 +78,13 @@ class SmsForwardWorker(
         val config = Json.decodeFromString<BarkConfig>(rule.configJson)
         if (config.key.isBlank()) throw Exception("Bark key is empty")
 
-        val url = "https://api.day.app/${config.key}"
+        val baseUrl = if (config.serverUrl.isNullOrBlank()) {
+            "https://api.day.app"
+        } else {
+            config.serverUrl.trim().removeSuffix("/")
+        }
+        val url = "$baseUrl/${config.key}"
+
         val title = appContext.getString(R.string.worker_new_sms_title, sms.sender)
         val payload = BarkPayload(body = sms.content, title = title)
         val payloadJson = Json.encodeToString(payload)
