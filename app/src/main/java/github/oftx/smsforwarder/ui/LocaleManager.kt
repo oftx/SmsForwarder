@@ -16,11 +16,7 @@ object LocaleManager {
             return context
         }
 
-        val locale = when(language) {
-            "zh-CN" -> Locale.SIMPLIFIED_CHINESE
-            "zh-TW" -> Locale.TRADITIONAL_CHINESE
-            else -> Locale(language)
-        }
+        val locale = Locale.forLanguageTag(language)
         
         Locale.setDefault(locale)
 
