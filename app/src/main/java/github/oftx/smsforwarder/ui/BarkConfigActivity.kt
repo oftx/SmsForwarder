@@ -35,6 +35,7 @@ class BarkConfigActivity : BaseActivity() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        setupCustomServerViews()
         setupEncryptionViews()
         setupValidation()
 
@@ -67,13 +68,25 @@ class BarkConfigActivity : BaseActivity() {
         binding.editTextRuleName.setText(rule.name)
         val config = Json.decodeFromString<BarkConfig>(rule.configJson)
         binding.editTextBarkKey.setText(config.key)
-        binding.editTextServerUrl.setText(config.serverUrl)
+
+        if (!config.serverUrl.isNullOrBlank()) {
+            binding.switchCustomServer.isChecked = true
+            binding.editTextServerUrl.setText(config.serverUrl)
+            binding.layoutCustomServer.visibility = View.VISIBLE
+        }
+
         binding.switchEncryption.isChecked = config.isEncrypted
         if (config.isEncrypted) {
             binding.dropdownAlgorithm.setText(config.algorithm ?: BarkConfig.ALGORITHM_AES_128, false)
             binding.dropdownMode.setText(config.mode ?: BarkConfig.MODE_CBC, false)
             binding.editTextEncryptionKey.setText(config.encryptionKey)
             binding.editTextIv.setText(config.iv)
+        }
+    }
+
+    private fun setupCustomServerViews() {
+        binding.switchCustomServer.setOnCheckedChangeListener { _, isChecked ->
+            binding.layoutCustomServer.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
     }
 
@@ -128,7 +141,13 @@ class BarkConfigActivity : BaseActivity() {
     private fun saveRule() {
         val name = binding.editTextRuleName.text.toString().trim()
         val barkKey = binding.editTextBarkKey.text.toString().trim()
-        val serverUrl = binding.editTextServerUrl.text.toString().trim()
+
+        val useCustomServer = binding.switchCustomServer.isChecked
+        val serverUrl = if (useCustomServer) {
+            binding.editTextServerUrl.text.toString().trim()
+        } else {
+            ""
+        }
 
         if (name.isEmpty() || barkKey.isEmpty()) {
             Snackbar.make(binding.root, R.string.error_name_and_key_cannot_be_empty, Snackbar.LENGTH_SHORT).show()

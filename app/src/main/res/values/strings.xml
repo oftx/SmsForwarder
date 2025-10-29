@@ -28,6 +28,7 @@
     <string name="hint_rule_name">Rule Name (e.g. My iPhone)</string>
     <string name="hint_bark_key">Bark Key (Device Key)</string>
     <string name="hint_bark_server_url">Bark Server URL (e.g. https://your.bark.server)</string>
+    <string name="use_custom_bark_server">Use Custom Bark Server</string>
     <string name="push_encryption">Push Encryption</string>
     <string name="encryption_algorithm">Algorithm (Determined by key length)</string>
     <string name="encryption_mode">Mode</string>
