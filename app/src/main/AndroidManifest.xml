@@ -27,7 +27,7 @@
             android:value="52" />
         <meta-data
             android:name="xposedscope"
-            android:value="com.android.mms" />
+            android:resource="@array/xposed_scope" />
 
         <activity
             android:name=".ui.MainActivity"
@@ -47,6 +47,15 @@
             android:name=".SmsProvider"
             android:authorities="github.oftx.smsforwarder.provider"
             android:exported="true" />
+            
+        <!-- New BroadcastReceiver Registration -->
+        <receiver
+            android:name=".SmsReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="github.oftx.smsforwarder.ACTION_SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

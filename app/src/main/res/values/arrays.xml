@@ -1,17 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The key size determines the algorithm, so this is for user clarity -->
-    <string-array name="encryption_algorithms">
-        <item>AES-128</item>
-        <item>AES-192</item>
-        <item>AES-256</item>
-    </string-array>
-    <string-array name="encryption_modes">
-        <item>CBC</item>
-        <item>ECB</item>
-        <item>GCM</item>
-    </string-array>
-
     <!-- Language Preference -->
     <string-array name="language_entries">
         <item>System Default</item>
@@ -19,10 +7,28 @@
         <item>简体中文</item>
         <item>繁體中文</item>
     </string-array>
-    <string-array name="language_entry_values">
+    <string-array name="language_entry_values" translatable="false">
         <item>system</item>
         <item>en</item>
         <item>zh-CN</item>
         <item>zh-TW</item>
+    </string-array>
+
+    <!-- Encryption -->
+    <string-array name="encryption_algorithms" translatable="false">
+        <item>AES-128</item>
+        <item>AES-192</item>
+        <item>AES-256</item>
+    </string-array>
+    <string-array name="encryption_modes" translatable="false">
+        <item>CBC</item>
+        <item>ECB</item>
+        <item>GCM</item>
+    </string-array>
+
+    <!-- Xposed Scope -->
+    <string-array name="xposed_scope" translatable="false">
+        <item>com.android.mms</item> <!-- MIUI, etc. -->
+        <item>com.google.android.apps.messaging</item> <!-- Google Messages (Stock Android) -->
     </string-array>
 </resources>
