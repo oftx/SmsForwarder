@@ -1,11 +1,15 @@
 package github.oftx.smsforwarder.ui
 
+import android.app.Dialog
+import android.content.DialogInterface
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Editable
+import android.view.View
 import android.widget.Toast
+import androidx.core.net.toUri
 import androidx.fragment.app.viewModels
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
@@ -13,7 +17,9 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
 import github.oftx.smsforwarder.R
+import java.util.Objects
 
 class SettingsFragment : PreferenceFragmentCompat() {
 
@@ -48,15 +54,16 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
 
         // 3. SMS Limit Preference
-        smsLimitPref?.summaryProvider = Preference.SummaryProvider<EditTextPreference> { preference ->
-            val text = preference.text
-            val value = text?.toIntOrNull() ?: -1
-            if (value <= 0) {
-                getString(R.string.pref_sms_limit_summary_unlimited)
-            } else {
-                getString(R.string.pref_sms_limit_summary_format, text)
+        smsLimitPref?.summaryProvider =
+            Preference.SummaryProvider<EditTextPreference> { preference ->
+                val text = preference.text
+                val value = text?.toIntOrNull() ?: -1
+                if (value <= 0) {
+                    getString(R.string.pref_sms_limit_summary_unlimited)
+                } else {
+                    getString(R.string.pref_sms_limit_summary_format, text)
+                }
             }
-        }
         smsLimitPref?.setOnBindEditTextListener { editText ->
             editText.hint = getString(R.string.pref_sms_limit_dialog_hint)
         }
@@ -80,12 +87,17 @@ class SettingsFragment : PreferenceFragmentCompat() {
         try {
             val intent = Intent().apply {
                 action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                data = Uri.parse("package:${requireContext().packageName}")
+                data = "package:${requireContext().packageName}".toUri()
             }
             startActivity(intent)
-            Toast.makeText(requireContext(), "请进入“电池”或“耗电管理”选项进行设置", Toast.LENGTH_LONG).show()
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(), "无法自动跳转，请手动进入系统设置", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                "请进入“电池”或“耗电管理”选项进行设置",
+                Toast.LENGTH_LONG
+            ).show()
+        } catch (_: Exception) {
+            Toast.makeText(requireContext(), "无法自动跳转，请手动进入系统设置", Toast.LENGTH_SHORT)
+                .show()
         }
     }
 
@@ -96,8 +108,60 @@ class SettingsFragment : PreferenceFragmentCompat() {
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.clear) { _, _ ->
                 viewModel.clearAllSms()
-                Toast.makeText(requireContext(), R.string.all_messages_cleared, Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), R.string.all_messages_cleared, Toast.LENGTH_SHORT)
+                    .show()
             }
             .show()
+    }
+
+    override fun onDisplayPreferenceDialog(preference: Preference) {
+        if (preference is ListPreference) {
+            showListPreference(preference)
+        } else if (preference is EditTextPreference) {
+            showEditTextPreference(preference)
+        } else {
+            super.onDisplayPreferenceDialog(preference)
+        }
+    }
+
+
+    private fun showListPreference(preference: ListPreference) {
+        val selectionIndex = listOf(*preference.entryValues)
+            .indexOf(preference.value)
+        val builder = MaterialAlertDialogBuilder(requireContext())
+        builder.setTitle(preference.title)
+        builder.setNegativeButton(android.R.string.cancel, null)
+        builder.setSingleChoiceItems(
+            preference.entries,
+            selectionIndex
+        ) { dialog: DialogInterface?, index: Int ->
+            val newValue = preference.entryValues[index].toString()
+            if (preference.callChangeListener(newValue)) {
+                preference.setValue(newValue)
+            }
+            dialog!!.dismiss()
+        }
+        builder.show()
+    }
+
+    fun showEditTextPreference(preference: EditTextPreference) {
+        val dialogView = View.inflate(requireContext(), R.layout.dialog_edit_text, null)
+        val input = dialogView.findViewById<TextInputEditText?>(R.id.textInput)
+        input?.setText(preference.text)
+
+        val builder = MaterialAlertDialogBuilder(requireContext())
+        builder.setTitle(preference.title)
+        builder.setIcon(R.drawable.ic_edit)
+        builder.setNegativeButton(android.R.string.cancel, null)
+        builder.setPositiveButton(android.R.string.ok, { dialog, i ->
+            val newValue = input?.getText().toString()
+            if (preference.callChangeListener(newValue)) {
+                preference.setText(newValue)
+            }
+            dialog.dismiss()
+        })
+        builder.setView(dialogView)
+        val dialog: Dialog = builder.create()
+        dialog.show()
     }
 }

@@ -15,7 +15,8 @@ class ForwarderRuleAdapter(
 ) : ListAdapter<ForwarderRule, ForwarderRuleAdapter.RuleViewHolder>(RuleDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RuleViewHolder {
-        val binding = ItemForwarderRuleBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            ItemForwarderRuleBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return RuleViewHolder(binding)
     }
 
@@ -23,16 +24,17 @@ class ForwarderRuleAdapter(
         holder.bind(getItem(position))
     }
 
-    inner class RuleViewHolder(private val binding: ItemForwarderRuleBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class RuleViewHolder(private val binding: ItemForwarderRuleBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         init {
             binding.root.setOnClickListener {
-                if (adapterPosition != RecyclerView.NO_POSITION) {
-                    onItemClicked(getItem(adapterPosition))
+                if (bindingAdapterPosition != RecyclerView.NO_POSITION) {
+                    onItemClicked(getItem(bindingAdapterPosition))
                 }
             }
             binding.root.setOnLongClickListener {
-                if (adapterPosition != RecyclerView.NO_POSITION) {
-                    onItemLongClicked(getItem(adapterPosition))
+                if (bindingAdapterPosition != RecyclerView.NO_POSITION) {
+                    onItemLongClicked(getItem(bindingAdapterPosition))
                 }
                 true
             }
@@ -41,7 +43,7 @@ class ForwarderRuleAdapter(
         fun bind(rule: ForwarderRule) {
             binding.tvRuleName.text = rule.name
             binding.tvRuleType.text = rule.type
-            
+
             // Set listener to null before changing checked state to prevent infinite loops
             binding.switchRuleEnabled.setOnCheckedChangeListener(null)
             binding.switchRuleEnabled.isChecked = rule.isEnabled
