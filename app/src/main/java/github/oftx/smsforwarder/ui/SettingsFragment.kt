@@ -6,7 +6,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.text.Editable
 import android.view.View
 import android.widget.Toast
 import androidx.core.net.toUri
@@ -18,8 +17,8 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import github.oftx.smsforwarder.R
-import java.util.Objects
 
 class SettingsFragment : PreferenceFragmentCompat() {
 
@@ -146,7 +145,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     fun showEditTextPreference(preference: EditTextPreference) {
         val dialogView = View.inflate(requireContext(), R.layout.dialog_edit_text, null)
+        val textInputLayout = dialogView.findViewById<TextInputLayout>(R.id.textInputLayout)
         val input = dialogView.findViewById<TextInputEditText?>(R.id.textInput)
+
+        if (preference.key == "pref_sms_limit") {
+            textInputLayout.hint = getString(R.string.pref_sms_limit_dialog_hint)
+        }
         input?.setText(preference.text)
 
         val builder = MaterialAlertDialogBuilder(requireContext())
