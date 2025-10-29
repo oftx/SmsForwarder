@@ -1,10 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.SmsForwarder" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Make status bar transparent -->
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <!-- Make navigation bar transparent -->
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+
     </style>
 
     <style name="Theme.SmsForwarder" parent="Base.Theme.SmsForwarder" />

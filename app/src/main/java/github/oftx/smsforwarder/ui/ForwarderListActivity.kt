@@ -2,8 +2,13 @@ package github.oftx.smsforwarder.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.view.ViewGroup
 import androidx.activity.viewModels
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -21,8 +26,8 @@ class ForwarderListActivity : BaseActivity() {
     private lateinit var ruleAdapter: ForwarderRuleAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         binding = ActivityForwarderListBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
@@ -34,6 +39,24 @@ class ForwarderListActivity : BaseActivity() {
         binding.fabAddRule.setOnClickListener {
             startActivity(Intent(this, BarkConfigActivity::class.java))
         }
+
+        // 保存原始 bottom margin（避免重复叠加）
+        val origBottomMargin =
+            (binding.fabAddRule.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin
+
+        // 监听 window insets（system bars）
+        ViewCompat.setOnApplyWindowInsetsListener(binding.fabAddRule) { v, insets ->
+            val sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // 更新 margin：原始 margin + 导航栏高度
+            v.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                bottomMargin = origBottomMargin + sysBars.bottom + 48
+            }
+            // 返回 insets 保持传播（不消费）
+            insets
+        }
+
+        // 确保触发一次 Insets 应用（有时首次不会自动触发）
+        ViewCompat.requestApplyInsets(binding.fabAddRule)
     }
 
     private fun setupRecyclerView() {
@@ -75,7 +98,7 @@ class ForwarderListActivity : BaseActivity() {
             }
             .show()
     }
-    
+
     override fun onSupportNavigateUp(): Boolean {
         onBackPressedDispatcher.onBackPressed()
         return true

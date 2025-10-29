@@ -8,7 +8,6 @@ import github.oftx.smsforwarder.databinding.ActivitySettingsBinding
 class SettingsActivity : BaseActivity() {
     private lateinit var binding: ActivitySettingsBinding
     override fun onCreate(savedInstanceState: Bundle?) {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)

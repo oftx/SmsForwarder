@@ -30,7 +30,6 @@ class BarkConfigActivity : BaseActivity() {
     private var isUpdating = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         super.onCreate(savedInstanceState)
         binding = ActivityBarkConfigBinding.inflate(layoutInflater)
         setContentView(binding.root)

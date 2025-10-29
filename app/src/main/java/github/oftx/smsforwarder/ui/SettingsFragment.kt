@@ -14,6 +14,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import github.oftx.smsforwarder.R
+import androidx.core.net.toUri
 
 class SettingsFragment : PreferenceFragmentCompat() {
 
@@ -80,11 +81,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         try {
             val intent = Intent().apply {
                 action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                data = Uri.parse("package:${requireContext().packageName}")
+                data = "package:${requireContext().packageName}".toUri()
             }
             startActivity(intent)
             Toast.makeText(requireContext(), "请进入“电池”或“耗电管理”选项进行设置", Toast.LENGTH_LONG).show()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Toast.makeText(requireContext(), "无法自动跳转，请手动进入系统设置", Toast.LENGTH_SHORT).show()
         }
     }
