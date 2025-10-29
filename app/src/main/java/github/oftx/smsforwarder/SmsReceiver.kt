@@ -10,6 +10,7 @@ import androidx.work.workDataOf
 import github.oftx.smsforwarder.database.ForwardingJobEntity
 import github.oftx.smsforwarder.database.JobStatus
 import github.oftx.smsforwarder.database.SmsEntity
+import github.oftx.smsforwarder.ui.LocaleManager
 import github.oftx.smsforwarder.worker.SmsForwardWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +45,10 @@ class SmsReceiver : BroadcastReceiver() {
         enforceSmsLimit(context, db)
 
         if (newSmsId > 0) {
-            scheduleForwarding(context, db, newSmsId)
+            // Create a context that respects the in-app language setting
+            val localizedContext = LocaleManager.updateBaseContext(context)
+            val localizedTitle = localizedContext.getString(R.string.worker_new_sms_title, sender)
+            scheduleForwarding(context, db, newSmsId, localizedTitle)
         }
     }
 
@@ -59,7 +63,7 @@ class SmsReceiver : BroadcastReceiver() {
         }
     }
 
-    private suspend fun scheduleForwarding(context: Context, db: AppDatabase, smsId: Long) {
+    private suspend fun scheduleForwarding(context: Context, db: AppDatabase, smsId: Long, localizedTitle: String) {
         val ruleDao = db.forwarderRuleDao()
         val jobDao = db.forwardingJobDao()
         val enabledRules = ruleDao.getAllEnabled()
@@ -73,7 +77,10 @@ class SmsReceiver : BroadcastReceiver() {
             )
             val jobId = jobDao.insert(newJob)
             val workRequest = OneTimeWorkRequestBuilder<SmsForwardWorker>()
-                .setInputData(workDataOf("job_id" to jobId)).build()
+                .setInputData(workDataOf(
+                    "job_id" to jobId,
+                    "localized_title" to localizedTitle
+                )).build()
             WorkManager.getInstance(context).enqueue(workRequest)
         }
     }

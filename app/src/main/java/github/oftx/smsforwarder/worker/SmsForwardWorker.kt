@@ -61,9 +61,17 @@ class SmsForwardWorker(
             return Result.failure()
         }
 
+        val localizedTitle = inputData.getString("localized_title")
+        val finalTitle = if (!localizedTitle.isNullOrBlank()) {
+            localizedTitle
+        } else {
+            // Fallback in case the title wasn't passed, though it should be.
+            appContext.getString(R.string.worker_new_sms_title, sms.sender)
+        }
+
         return try {
             when (rule.type) {
-                ForwarderRule.TYPE_BARK -> forwardToBark(rule, sms)
+                ForwarderRule.TYPE_BARK -> forwardToBark(rule, sms, finalTitle)
                 else -> throw IllegalArgumentException("Unsupported rule type: ${rule.type}")
             }
             AppLogger.suspendLog(appContext, "[Worker] Job $jobId to '${rule.name}' completed successfully.")
@@ -74,7 +82,7 @@ class SmsForwardWorker(
         }
     }
 
-    private fun forwardToBark(rule: ForwarderRule, sms: SmsEntity) {
+    private fun forwardToBark(rule: ForwarderRule, sms: SmsEntity, title: String) {
         val config = Json.decodeFromString<BarkConfig>(rule.configJson)
         if (config.key.isBlank()) throw Exception("Bark key is empty")
 
@@ -85,7 +93,6 @@ class SmsForwardWorker(
         }
         val url = "$baseUrl/${config.key}"
 
-        val title = appContext.getString(R.string.worker_new_sms_title, sms.sender)
         val payload = BarkPayload(body = sms.content, title = title)
         val payloadJson = Json.encodeToString(payload)
 
