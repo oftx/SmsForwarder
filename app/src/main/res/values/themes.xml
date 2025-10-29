@@ -1,8 +1,16 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <!-- Base application theme. -->
     <style name="Base.Theme.SmsForwarder" parent="Theme.Material3.DayNight.NoActionBar">
-
+        <item name="preferenceTheme">@style/AppPreferenceThemeOverlay</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.SmsForwarder" parent="Base.Theme.SmsForwarder" />
+
+    <style name="AppPreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
+        <item name="switchPreferenceCompatStyle">@style/AppSwitchPreference</item>
+    </style>
+    <style name="AppSwitchPreference" parent="@style/Preference.SwitchPreferenceCompat.Material">
+        <item name="widgetLayout">@layout/preference_material_switch</item>
+    </style>
 </resources>
