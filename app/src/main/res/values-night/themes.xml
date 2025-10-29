@@ -1,6 +1,7 @@
 <resources>
     <!-- Base application theme. -->
     <style name="Base.Theme.SmsForwarder" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="preferenceTheme">@style/AppPreferenceThemeOverlay</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>
