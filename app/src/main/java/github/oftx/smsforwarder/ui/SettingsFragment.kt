@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.fragment.app.viewModels
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
@@ -39,7 +40,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         // 1. Monet/Dynamic Color Preference
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             monetPref?.setOnPreferenceChangeListener { _, _ ->
-                activity?.recreate()
+                // Use post to delay the broadcast, ensuring the preference value is saved before recreation
+                view?.post { sendRecreateBroadcast() }
                 true
             }
         } else {
@@ -48,7 +50,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         // 2. Language Preference
         languagePref?.setOnPreferenceChangeListener { _, _ ->
-            activity?.recreate()
+            // Use post to delay the broadcast, ensuring the preference value is saved before recreation
+            view?.post { sendRecreateBroadcast() }
             true
         }
 
@@ -80,6 +83,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
             openBatterySettings()
             true
         }
+    }
+
+    private fun sendRecreateBroadcast() {
+        val intent = Intent(BaseActivity.ACTION_RECREATE_ACTIVITIES)
+        LocalBroadcastManager.getInstance(requireContext()).sendBroadcast(intent)
     }
 
     private fun openBatterySettings() {
