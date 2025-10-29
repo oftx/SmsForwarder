@@ -54,6 +54,9 @@
     <string name="pref_view_logs_title">檢視日誌</string>
     <string name="pref_view_logs_summary">開啟應用程式和轉發日誌記錄</string>
 
+    <string name="pref_battery_optimization_title">應用程式電池用量</string>
+    <string name="pref_battery_usage_summary">點擊以設為「無限制」，確保轉發功能可靠</string>
+
     <string name="settings_category_appearance">外觀</string>
     <string name="pref_monet_theme_title">Monet 取色</string>
     <string name="pref_monet_theme_summary">跟隨系統桌布顏色 (Android 12+)</string>

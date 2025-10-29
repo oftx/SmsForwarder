@@ -54,6 +54,9 @@
     <string name="pref_view_logs_title">View Logs</string>
     <string name="pref_view_logs_summary">Open application and forwarding logs</string>
 
+    <string name="pref_battery_optimization_title">App Battery Usage</string>
+    <string name="pref_battery_usage_summary">Click to set to "Unrestricted" to ensure reliable forwarding</string>
+
     <string name="settings_category_appearance">Appearance</string>
     <string name="pref_monet_theme_title">Monet Theme</string>
     <string name="pref_monet_theme_summary">Follow system wallpaper color (Android 12+)</string>

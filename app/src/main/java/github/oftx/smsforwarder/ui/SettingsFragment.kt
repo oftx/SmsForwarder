@@ -1,8 +1,10 @@
 package github.oftx.smsforwarder.ui
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.preference.EditTextPreference
@@ -27,6 +29,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val smsLimitPref = findPreference<EditTextPreference>("pref_sms_limit")
         val clearSmsPref = findPreference<Preference>("pref_clear_sms")
         val viewLogsPref = findPreference<Preference>("pref_view_logs")
+        val batteryPref = findPreference<Preference>("pref_ignore_battery_optimizations")
 
         // 1. Monet/Dynamic Color Preference
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -66,6 +69,23 @@ class SettingsFragment : PreferenceFragmentCompat() {
         clearSmsPref?.setOnPreferenceClickListener {
             showClearSmsConfirmationDialog()
             true
+        }
+        batteryPref?.setOnPreferenceClickListener {
+            openBatterySettings()
+            true
+        }
+    }
+
+    private fun openBatterySettings() {
+        try {
+            val intent = Intent().apply {
+                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                data = Uri.parse("package:${requireContext().packageName}")
+            }
+            startActivity(intent)
+            Toast.makeText(requireContext(), "请进入“电池”或“耗电管理”选项进行设置", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "无法自动跳转，请手动进入系统设置", Toast.LENGTH_SHORT).show()
         }
     }
 

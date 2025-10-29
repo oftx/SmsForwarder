@@ -54,6 +54,9 @@
     <string name="pref_view_logs_title">查看日志</string>
     <string name="pref_view_logs_summary">打开应用和转发日志记录</string>
 
+    <string name="pref_battery_optimization_title">应用电池用量</string>
+    <string name="pref_battery_usage_summary">点击以设为“无限制”，确保转发功能可靠</string>
+
     <string name="settings_category_appearance">外观</string>
     <string name="pref_monet_theme_title">莫奈取色</string>
     <string name="pref_monet_theme_summary">跟随系统壁纸颜色 (Android 12+)</string>
