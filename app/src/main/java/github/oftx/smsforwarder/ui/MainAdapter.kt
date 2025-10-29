@@ -38,9 +38,10 @@ class MainAdapter(
 
         init {
             itemView.setOnClickListener {
-                if (adapterPosition != RecyclerView.NO_POSITION) {
-                    val item = getItem(adapterPosition) as ListItem.Sms
-                    onItemClicked(item.item.id, adapterPosition)
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val item = getItem(position) as ListItem.Sms
+                    onItemClicked(item.item.id, position)
                 }
             }
         }
