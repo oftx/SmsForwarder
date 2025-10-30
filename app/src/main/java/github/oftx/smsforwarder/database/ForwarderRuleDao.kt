@@ -19,8 +19,14 @@ interface ForwarderRuleDao {
     @Delete
     suspend fun delete(rule: ForwarderRule)
 
+    @Query("DELETE FROM forwarder_rules")
+    suspend fun deleteAll()
+
     @Query("SELECT * FROM forwarder_rules ORDER BY id DESC")
     fun getAll(): Flow<List<ForwarderRule>>
+
+    @Query("SELECT * FROM forwarder_rules")
+    suspend fun getAllOnce(): List<ForwarderRule>
 
     @Query("SELECT * FROM forwarder_rules WHERE isEnabled = 1")
     suspend fun getAllEnabled(): List<ForwarderRule>

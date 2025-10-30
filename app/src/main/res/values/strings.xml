@@ -86,6 +86,19 @@
     <string name="clear_sms_dialog_title">Clear All Messages</string>
     <string name="clear_sms_dialog_message">Are you sure you want to delete all saved SMS records? This action cannot be undone.</string>
     <string name="all_messages_cleared">All messages cleared</string>
+    <string name="pref_export_data_title">Export Data</string>
+    <string name="pref_export_data_summary">Save forwarding rules and messages to a file</string>
+    <string name="pref_import_data_title">Import Data</string>
+    <string name="pref_import_data_summary">Restore forwarding rules and messages from a file</string>
+    <string name="export_success">Data exported successfully</string>
+    <string name="export_failed">Data export failed</string>
+    <string name="import_success">Data imported successfully</string>
+    <string name="import_failed">Data import failed: Invalid file format</string>
+    <string name="import_dialog_title">Import Data Confirmation</string>
+    <string name="import_dialog_message">This will restore rules and messages from the selected file. Choose an import strategy:</string>
+    <string name="import_strategy_merge">Merge (Add new data)</string>
+    <string name="import_strategy_replace">Clear and Replace</string>
+    <string name="import_action">Import</string>
 
     <!-- Worker -->
     <string name="worker_new_sms_title">New message from: %1$s</string>

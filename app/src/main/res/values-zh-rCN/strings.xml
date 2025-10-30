@@ -86,6 +86,19 @@
     <string name="clear_sms_dialog_title">清空所有消息</string>
     <string name="clear_sms_dialog_message">您确定要删除所有已保存的短信记录吗？此操作无法撤销。</string>
     <string name="all_messages_cleared">所有消息已清空</string>
+    <string name="pref_export_data_title">导出数据</string>
+    <string name="pref_export_data_summary">将转发规则和短信记录保存到文件</string>
+    <string name="pref_import_data_title">导入数据</string>
+    <string name="pref_import_data_summary">从文件恢复转发规则和短信记录</string>
+    <string name="export_success">数据导出成功</string>
+    <string name="export_failed">数据导出失败</string>
+    <string name="import_success">数据导入成功</string>
+    <string name="import_failed">数据导入失败：文件格式无效</string>
+    <string name="import_dialog_title">确认导入数据</string>
+    <string name="import_dialog_message">这将从所选文件中恢复规则和短信。请选择导入策略：</string>
+    <string name="import_strategy_merge">合并（添加新数据）</string>
+    <string name="import_strategy_replace">清空并替换</string>
+    <string name="import_action">导入</string>
 
     <!-- Worker -->
     <string name="worker_new_sms_title">新短信来自: %1$s</string>

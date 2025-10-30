@@ -3,11 +3,13 @@ package github.oftx.smsforwarder.ui
 import android.app.Dialog
 import android.content.DialogInterface
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -21,11 +23,38 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import github.oftx.smsforwarder.R
 import kotlinx.coroutines.launch
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class SettingsFragment : PreferenceFragmentCompat() {
 
     private val viewModel: SettingsViewModel by viewModels {
         SettingsViewModelFactory(requireActivity().application)
+    }
+
+    private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri?.let {
+            lifecycleScope.launch {
+                try {
+                    val jsonString = viewModel.exportData()
+                    requireContext().contentResolver.openOutputStream(it)?.use { outputStream ->
+                        outputStream.write(jsonString.toByteArray())
+                    }
+                    Toast.makeText(requireContext(), R.string.export_success, Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), R.string.export_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private val importLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            showImportConfirmationDialog(it)
+        }
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -38,6 +67,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val retryAttemptsPref = findPreference<EditTextPreference>("pref_max_retry_attempts")
         val viewLogsPref = findPreference<Preference>("pref_view_logs")
         val batteryPref = findPreference<Preference>("pref_ignore_battery_optimizations")
+        val exportPref = findPreference<Preference>("pref_export_data")
+        val importPref = findPreference<Preference>("pref_import_data")
 
         // 1. Monet/Dynamic Color Preference
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -82,7 +113,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
         retryAttemptsPref?.dialogTitle = getString(R.string.pref_max_retry_attempts_dialog_title)
 
-        // 4. Click listeners
+        // 5. Click listeners
         viewLogsPref?.setOnPreferenceClickListener {
             startActivity(Intent(requireContext(), LogActivity::class.java))
             true
@@ -94,6 +125,63 @@ class SettingsFragment : PreferenceFragmentCompat() {
         batteryPref?.setOnPreferenceClickListener {
             openBatterySettings()
             true
+        }
+        exportPref?.setOnPreferenceClickListener {
+            val simpleDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+            val timestamp = simpleDateFormat.format(Date())
+            val fileName = "smsforwarder_backup_$timestamp.json"
+            exportLauncher.launch(fileName)
+            true
+        }
+        importPref?.setOnPreferenceClickListener {
+            importLauncher.launch(arrayOf("application/json"))
+            true
+        }
+    }
+
+    private fun showImportConfirmationDialog(uri: Uri) {
+        val strategies = arrayOf(
+            getString(R.string.import_strategy_merge),
+            getString(R.string.import_strategy_replace)
+        )
+        var selectedStrategy = ImportStrategy.MERGE
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.import_dialog_title)
+            // FIXED: Removed .setMessage() as it conflicts with setSingleChoiceItems()
+            .setSingleChoiceItems(strategies, 0) { _, which ->
+                selectedStrategy = if (which == 0) ImportStrategy.MERGE else ImportStrategy.REPLACE
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .setPositiveButton(R.string.import_action) { _, _ ->
+                importDataFromFile(uri, selectedStrategy)
+            }
+            .show()
+    }
+
+    private fun importDataFromFile(uri: Uri, strategy: ImportStrategy) {
+        lifecycleScope.launch {
+            try {
+                val stringBuilder = StringBuilder()
+                requireContext().contentResolver.openInputStream(uri)?.use { inputStream ->
+                    BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                        var line: String? = reader.readLine()
+                        while (line != null) {
+                            stringBuilder.append(line)
+                            line = reader.readLine()
+                        }
+                    }
+                }
+                val success = viewModel.importData(stringBuilder.toString(), strategy)
+                if (success) {
+                    Toast.makeText(requireContext(), R.string.import_success, Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), R.string.import_failed, Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                val errorMessage = getString(R.string.import_failed) + ": " + e.localizedMessage
+                Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
+            }
         }
     }
 

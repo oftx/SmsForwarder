@@ -59,6 +59,14 @@
             app:key="pref_clear_sms"
             app:title="@string/pref_clear_sms_title"
             app:summary="@string/pref_clear_sms_summary" />
+        <Preference
+            app:key="pref_export_data"
+            app:title="@string/pref_export_data_title"
+            app:summary="@string/pref_export_data_summary" />
+        <Preference
+            app:key="pref_import_data"
+            app:title="@string/pref_import_data_title"
+            app:summary="@string/pref_import_data_summary" />
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -86,6 +86,19 @@
     <string name="clear_sms_dialog_title">清除所有訊息</string>
     <string name="clear_sms_dialog_message">您確定要刪除所有已儲存的簡訊記錄嗎？此操作無法復原。</string>
     <string name="all_messages_cleared">所有訊息已清除</string>
+    <string name="pref_export_data_title">匯出資料</string>
+    <string name="pref_export_data_summary">將轉發規則和訊息記錄儲存到檔案</string>
+    <string name="pref_import_data_title">匯入資料</string>
+    <string name="pref_import_data_summary">從檔案還原轉發規則和訊息記錄</string>
+    <string name="export_success">資料匯出成功</string>
+    <string name="export_failed">資料匯出失敗</string>
+    <string name="import_success">資料匯入成功</string>
+    <string name="import_failed">資料匯入失敗：檔案格式無效</string>
+    <string name="import_dialog_title">確認匯入資料</string>
+    <string name="import_dialog_message">這將從所選檔案中還原規則和訊息。請選擇匯入策略：</string>
+    <string name="import_strategy_merge">合併（新增資料）</string>
+    <string name="import_strategy_replace">清除並取代</string>
+    <string name="import_action">匯入</string>
 
     <!-- Worker -->
     <string name="worker_new_sms_title">新簡訊來自: %1$s</string>
