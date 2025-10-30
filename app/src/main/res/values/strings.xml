@@ -85,7 +85,7 @@
     <string name="detail_content">Content:</string>
     <string name="ok">OK</string>
     <string name="status_label_forwarding_to">Forwarding Status for %1$s:</string>
-    <string name="status_pending">Sending...</string>
+    <string name="status_pending">Sending…</string>
     <string name="status_sent">Sent</string>
     <string name="status_cancelled">Cancelled</string>
     <string name="status_retrying">Waiting for retry</string>

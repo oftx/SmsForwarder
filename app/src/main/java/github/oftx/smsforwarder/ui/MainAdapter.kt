@@ -23,7 +23,7 @@ data class SmsItem(
     val sender: String,
     val content: String,
     val timestamp: Long,
-    val jobs: List<ForwardingJobWithRuleName> // Changed from statusSummary
+    val jobs: List<ForwardingJobWithRuleName>
 )
 
 class MainAdapter(
@@ -82,7 +82,8 @@ class MainAdapter(
         if (successCount == total) {
             return context.getString(R.string.status_summary_all_sent)
         }
-        if (cancelledCount == total && total > 0) {
+        // FIX: The condition 'total > 0' is redundant here
+        if (cancelledCount == total) {
             return context.getString(R.string.status_summary_all_cancelled)
         }
 
@@ -123,11 +124,12 @@ class MainAdapter(
 
 class MainDiffCallback : DiffUtil.ItemCallback<ListItem>() {
     override fun areItemsTheSame(oldItem: ListItem, newItem: ListItem): Boolean {
+        // Correctly compare IDs for item identity
         return (oldItem as ListItem.Sms).item.id == (newItem as ListItem.Sms).item.id
     }
 
     override fun areContentsTheSame(oldItem: ListItem, newItem: ListItem): Boolean {
-        // CharSequence.toString() is used for content comparison
-        return oldItem.toString() == newItem.toString()
+        // FIX: Use the data class's generated equals() for proper content comparison
+        return oldItem == newItem
     }
 }

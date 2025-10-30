@@ -1,9 +1,7 @@
 package github.oftx.smsforwarder.ui
 
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Menu
@@ -11,6 +9,8 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -43,7 +43,7 @@ class MainActivity : BaseActivity() {
     }
 
     private fun checkAndShowFirstLaunchPrompt() {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         val isPromptShown = prefs.getBoolean(KEY_FIRST_LAUNCH_PROMPT_SHOWN, false)
 
         if (!isPromptShown) {
@@ -60,8 +60,10 @@ class MainActivity : BaseActivity() {
             }
             .setNegativeButton(R.string.first_launch_dialog_negative_button, null)
             .setOnDismissListener {
-                // 确保无论用户点击哪个按钮，提示都只显示一次
-                prefs.edit().putBoolean(KEY_FIRST_LAUNCH_PROMPT_SHOWN, true).apply()
+                // Use KTX extension for conciseness
+                prefs.edit {
+                    putBoolean(KEY_FIRST_LAUNCH_PROMPT_SHOWN, true)
+                }
             }
             .show()
     }
@@ -70,11 +72,12 @@ class MainActivity : BaseActivity() {
         try {
             val intent = Intent().apply {
                 action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                data = Uri.parse("package:$packageName")
+                // Use KTX extension to convert String to Uri
+                data = "package:$packageName".toUri()
             }
             startActivity(intent)
             Toast.makeText(this, R.string.battery_settings_toast, Toast.LENGTH_LONG).show()
-        } catch (e: Exception) {
+        } catch (_: Exception) { // Unused parameter 'e' replaced with '_'
             Toast.makeText(this, R.string.cannot_open_settings_toast, Toast.LENGTH_SHORT).show()
         }
     }

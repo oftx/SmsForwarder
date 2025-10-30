@@ -85,7 +85,7 @@
     <string name="detail_content">簡訊內容:</string>
     <string name="ok">確定</string>
     <string name="status_label_forwarding_to">轉發狀態 - %1$s:</string>
-    <string name="status_pending">正在傳送...</string>
+    <string name="status_pending">正在傳送…</string>
     <string name="status_sent">已傳送</string>
     <string name="status_cancelled">已取消傳送</string>
     <string name="status_retrying">等待重試</string>
