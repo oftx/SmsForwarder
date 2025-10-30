@@ -100,4 +100,16 @@
     <string name="status_summary_all_cancelled">All forwarding cancelled</string>
     <string name="status_summary_forwarding_to">Forwarding to:\u0020</string>
     <string name="status_summary_retrying">Retrying:\u0020</string>
+
+    <!-- START: New Strings for Internationalization -->
+    <!-- First Launch Prompt -->
+    <string name="first_launch_dialog_title">Important Setting Reminder</string>
+    <string name="first_launch_dialog_message">To ensure the SMS forwarding feature works reliably when the screen is locked or the phone is idle for a long time, please set the app\'s battery usage to \"Unrestricted\".</string>
+    <string name="first_launch_dialog_positive_button">Go to Settings</string>
+    <string name="first_launch_dialog_negative_button">Got It</string>
+
+    <!-- Toasts -->
+    <string name="battery_settings_toast">Please go to the "Battery" or "Power Management" section to configure.</string>
+    <string name="cannot_open_settings_toast">Could not open automatically, please go to system settings manually.</string>
+    <!-- END: New Strings for Internationalization -->
 </resources>

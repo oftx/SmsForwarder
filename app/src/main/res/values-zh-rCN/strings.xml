@@ -100,4 +100,16 @@
     <string name="status_summary_all_cancelled">所有转发已取消</string>
     <string name="status_summary_forwarding_to">正在转发至:\u0020</string>
     <string name="status_summary_retrying">正在重试:\u0020</string>
+
+    <!-- START: New Strings for Internationalization -->
+    <!-- First Launch Prompt -->
+    <string name="first_launch_dialog_title">重要设置提醒</string>
+    <string name="first_launch_dialog_message">为了确保短信转发功能在手机锁屏或长时间静置后依然能正常工作，请将应用的电池用量设置为“无限制”。</string>
+    <string name="first_launch_dialog_positive_button">去设置</string>
+    <string name="first_launch_dialog_negative_button">已知晓</string>
+
+    <!-- Toasts -->
+    <string name="battery_settings_toast">请进入“电池”或“耗电管理”选项进行设置</string>
+    <string name="cannot_open_settings_toast">无法自动跳转，请手动进入系统设置</string>
+    <!-- END: New Strings for Internationalization -->
 </resources>

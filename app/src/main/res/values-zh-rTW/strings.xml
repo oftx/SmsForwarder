@@ -100,4 +100,16 @@
     <string name="status_summary_all_cancelled">所有轉發已取消</string>
     <string name="status_summary_forwarding_to">正在轉發至:\u0020</string>
     <string name="status_summary_retrying">正在重試:\u0020</string>
+
+    <!-- START: New Strings for Internationalization -->
+    <!-- First Launch Prompt -->
+    <string name="first_launch_dialog_title">重要設定提醒</string>
+    <string name="first_launch_dialog_message">為確保簡訊轉發功能在手機鎖屏或長時間靜置後依然能正常工作，請將應用的電池用量設定為「無限制」。</string>
+    <string name="first_launch_dialog_positive_button">去設定</string>
+    <string name="first_launch_dialog_negative_button">已知曉</string>
+
+    <!-- Toasts -->
+    <string name="battery_settings_toast">請進入「電池」或「耗電管理」選項進行設定</string>
+    <string name="cannot_open_settings_toast">無法自動跳轉，請手動進入系統設定</string>
+    <!-- END: New Strings for Internationalization -->
 </resources>

@@ -101,11 +101,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
             startActivity(intent)
             Toast.makeText(
                 requireContext(),
-                "请进入“电池”或“耗电管理”选项进行设置",
+                R.string.battery_settings_toast,
                 Toast.LENGTH_LONG
             ).show()
         } catch (_: Exception) {
-            Toast.makeText(requireContext(), "无法自动跳转，请手动进入系统设置", Toast.LENGTH_SHORT)
+            Toast.makeText(requireContext(), R.string.cannot_open_settings_toast, Toast.LENGTH_SHORT)
                 .show()
         }
     }

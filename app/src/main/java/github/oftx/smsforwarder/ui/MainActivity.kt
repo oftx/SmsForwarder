@@ -53,12 +53,12 @@ class MainActivity : BaseActivity() {
 
     private fun showFirstLaunchBatteryDialog(prefs: SharedPreferences) {
         MaterialAlertDialogBuilder(this)
-            .setTitle("重要设置提醒")
-            .setMessage("为了确保短信转发功能在手机锁屏或长时间静置后依然能正常工作，请将应用的电池用量设置为“无限制”。")
-            .setPositiveButton("去设置") { _, _ ->
+            .setTitle(R.string.first_launch_dialog_title)
+            .setMessage(R.string.first_launch_dialog_message)
+            .setPositiveButton(R.string.first_launch_dialog_positive_button) { _, _ ->
                 openBatterySettings()
             }
-            .setNegativeButton("已知晓", null)
+            .setNegativeButton(R.string.first_launch_dialog_negative_button, null)
             .setOnDismissListener {
                 // 确保无论用户点击哪个按钮，提示都只显示一次
                 prefs.edit().putBoolean(KEY_FIRST_LAUNCH_PROMPT_SHOWN, true).apply()
@@ -73,9 +73,9 @@ class MainActivity : BaseActivity() {
                 data = Uri.parse("package:$packageName")
             }
             startActivity(intent)
-            Toast.makeText(this, "请进入“电池”或“耗电管理”选项进行设置", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.battery_settings_toast, Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
-            Toast.makeText(this, "无法自动跳转，请手动进入系统设置", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.cannot_open_settings_toast, Toast.LENGTH_SHORT).show()
         }
     }
 
