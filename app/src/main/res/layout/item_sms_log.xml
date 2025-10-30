@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginStart="8dp"
@@ -50,6 +51,18 @@
             android:text="This is the content of the SMS message."
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
             android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <!-- 新增：用于显示转发状态摘要的 TextView -->
+        <TextView
+            android:id="@+id/tv_status_summary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+            android:textColor="?attr/colorSecondary"
+            android:visibility="gone"
+            tools:text="Retrying: iPhone, Mac(✓)"
+            tools:visibility="visible" />
 
     </LinearLayout>
 

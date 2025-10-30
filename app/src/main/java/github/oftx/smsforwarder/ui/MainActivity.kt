@@ -11,12 +11,12 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import github.oftx.smsforwarder.R
 import github.oftx.smsforwarder.databinding.ActivityMainBinding
+import github.oftx.smsforwarder.ui.details.SmsDetailDialogFragment
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -80,13 +80,9 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setupRecyclerView() {
-        listAdapter = MainAdapter { itemId, position ->
-            if (listAdapter.expandedItems.contains(itemId)) {
-                listAdapter.expandedItems.remove(itemId)
-            } else {
-                listAdapter.expandedItems.add(itemId)
-            }
-            listAdapter.notifyItemChanged(position)
+        listAdapter = MainAdapter { smsId ->
+            SmsDetailDialogFragment.newInstance(smsId)
+                .show(supportFragmentManager, SmsDetailDialogFragment.TAG)
         }
         binding.rvSms.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)

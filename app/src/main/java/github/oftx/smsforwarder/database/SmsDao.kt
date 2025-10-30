@@ -15,6 +15,10 @@ interface SmsDao {
 
     @Query("SELECT * FROM sms_logs WHERE id = :smsId")
     suspend fun getSmsById(smsId: Long): SmsEntity?
+    
+    // 新增：为详情弹窗提供 Flow 版本的查询
+    @Query("SELECT * FROM sms_logs WHERE id = :smsId")
+    fun getSmsByIdAsFlow(smsId: Long): Flow<SmsEntity?>
 
     @Query("DELETE FROM sms_logs")
     suspend fun deleteAll()

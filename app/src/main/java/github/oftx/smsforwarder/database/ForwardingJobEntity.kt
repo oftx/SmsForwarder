@@ -1,5 +1,6 @@
 package github.oftx.smsforwarder.database
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -21,3 +22,9 @@ enum class JobStatus(val value: String) {
     CANCELLED("CANCELLED"),
     FAILED_PERMANENTLY("FAILED_PERMANENTLY")
 }
+
+// 新增的数据类，用于封装 JOIN 查询的结果
+data class ForwardingJobWithRuleName(
+    val ruleName: String,
+    @Embedded val job: ForwardingJobEntity
+)

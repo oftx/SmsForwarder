@@ -78,4 +78,27 @@
 
     <!-- Worker -->
     <string name="worker_new_sms_title">New message from: %1$s</string>
+    n    <!-- SMS Detail Dialog -->
+    <string name="sms_details_title">SMS Details</string>
+    <string name="detail_sender">Sender:</string>
+    <string name="detail_received_at">Received at:</string>
+    <string name="detail_content">Content:</string>
+    <string name="ok">OK</string>
+    <string name="status_label_forwarding_to">Forwarding Status for %1$s:</string>
+    <string name="status_pending">Sending...</string>
+    <string name="status_sent">Sent</string>
+    <string name="status_cancelled">Cancelled</string>
+    <string name="status_retrying">Waiting for retry</string>
+    <string name="status_failed">Failed permanently</string>
+    <string name="button_retry_now">Retry Now</string>
+    <string name="button_cancel_send">Cancel</string>
+    <string name="job_cancelled_toast">Forwarding to %1$s has been cancelled.</string>
+    <string name="job_retry_toast">Will retry forwarding to %1$s now.</string>
+
+    <!-- Status Summaries for Main Screen -->
+    <string name="status_summary_all_sent">Forwarded</string>
+    <string name="status_summary_all_cancelled">All forwarding cancelled</string>
+    <string name="status_summary_forwarding_to">Forwarding to: </string>
+    <string name="status_summary_retrying">Retrying: </string>
+    <string name="status_summary_marker_cancelled">(Cancelled)</string>
 </resources>

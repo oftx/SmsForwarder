@@ -8,90 +8,80 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import github.oftx.smsforwarder.R
-import github.oftx.smsforwarder.database.ForwardingJobEntity
 
 // Models for the list
 sealed class ListItem {
+    // SmsItem 现在包含 statusSummary
     data class Sms(val item: SmsItem) : ListItem()
-    data class RetryJob(val job: ForwardingJobEntity, val ruleName: String) : ListItem()
 }
 
-// Add ID for stable tracking of expanded state
-data class SmsItem(val id: Long, val sender: String, val content: String, val timestamp: Long)
+// SmsItem 现在包含 statusSummary
+data class SmsItem(
+    val id: Long,
+    val sender: String,
+    val content: String,
+    val timestamp: Long,
+    val statusSummary: String // 新增字段
+)
 
 class MainAdapter(
-    private val onItemClicked: (Long, Int) -> Unit
-) : ListAdapter<ListItem, RecyclerView.ViewHolder>(MainDiffCallback()) {
+    private val onItemClicked: (Long) -> Unit // 回调只传递 smsId
+) : ListAdapter<ListItem, MainAdapter.SmsViewHolder>(MainDiffCallback()) {
 
     companion object {
         private const val TYPE_SMS = 0
-        private const val TYPE_RETRY_JOB = 1
     }
-
-    // State for expanded items
-    val expandedItems = mutableSetOf<Long>()
 
     inner class SmsViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val senderTextView: TextView = view.findViewById(R.id.tv_sender)
         private val contentTextView: TextView = view.findViewById(R.id.tv_content)
         private val timestampTextView: TextView = view.findViewById(R.id.tv_timestamp)
+        private val statusSummaryTextView: TextView = view.findViewById(R.id.tv_status_summary) // 新增 View
 
         init {
             itemView.setOnClickListener {
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     val item = getItem(position) as ListItem.Sms
-                    onItemClicked(item.item.id, position)
+                    onItemClicked(item.item.id) // 传递 ID
                 }
             }
         }
 
         fun bind(smsItem: SmsItem) {
-            senderTextView.text = itemView.context.getString(R.string.sms_sender_format, smsItem.sender)
+            senderTextView.text =
+                itemView.context.getString(R.string.sms_sender_format, smsItem.sender)
             contentTextView.text = smsItem.content
+            timestampTextView.text = TimeUtil.formatDefault(itemView.context, smsItem.timestamp)
 
-            // Set timestamp based on expanded state
-            if (expandedItems.contains(smsItem.id)) {
-                timestampTextView.text = TimeUtil.getAbsoluteTime(smsItem.timestamp)
+            // 绑定状态摘要
+            if (smsItem.statusSummary.isNotEmpty()) {
+                statusSummaryTextView.visibility = View.VISIBLE
+                statusSummaryTextView.text = smsItem.statusSummary
             } else {
-                timestampTextView.text = TimeUtil.formatDefault(itemView.context, smsItem.timestamp)
+                statusSummaryTextView.visibility = View.GONE
             }
         }
     }
 
-    class RetryJobViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        // Define views and bind logic for the retry item layout here
-    }
-
     override fun getItemViewType(position: Int): Int {
-        return when (getItem(position)) {
-            is ListItem.Sms -> TYPE_SMS
-            is ListItem.RetryJob -> TYPE_RETRY_JOB
-        }
+        return TYPE_SMS
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return when (viewType) {
-            TYPE_SMS -> SmsViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_sms_log, parent, false))
-            else -> throw IllegalArgumentException("Invalid view type: $viewType")
-        }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SmsViewHolder {
+        return SmsViewHolder(
+            LayoutInflater.from(parent.context).inflate(R.layout.item_sms_log, parent, false)
+        )
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (val currentItem = getItem(position)) {
-            is ListItem.Sms -> (holder as SmsViewHolder).bind(currentItem.item)
-            is ListItem.RetryJob -> { /* Bind retry job holder */ }
-        }
+    override fun onBindViewHolder(holder: SmsViewHolder, position: Int) {
+        holder.bind((getItem(position) as ListItem.Sms).item)
     }
 }
 
 class MainDiffCallback : DiffUtil.ItemCallback<ListItem>() {
     override fun areItemsTheSame(oldItem: ListItem, newItem: ListItem): Boolean {
-        return when {
-            oldItem is ListItem.Sms && newItem is ListItem.Sms -> oldItem.item.id == newItem.item.id
-            oldItem is ListItem.RetryJob && newItem is ListItem.RetryJob -> oldItem.job.id == newItem.job.id
-            else -> false
-        }
+        return (oldItem as ListItem.Sms).item.id == (newItem as ListItem.Sms).item.id
     }
 
     override fun areContentsTheSame(oldItem: ListItem, newItem: ListItem): Boolean {

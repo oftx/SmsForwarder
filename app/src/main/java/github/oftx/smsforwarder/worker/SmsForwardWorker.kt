@@ -49,15 +49,27 @@ class SmsForwardWorker(
         AppLogger.suspendLog(appContext, "[Worker] Starting job $jobId.")
 
         val job = jobDao.getJobById(jobId) ?: run {
-            AppLogger.suspendLog(appContext, "[Worker] Job $jobId not found in DB (possibly cancelled). Stopping.")
+            AppLogger.suspendLog(appContext, "[Worker] Job $jobId not found in DB (possibly deleted). Stopping.")
             return Result.success()
         }
+
+        // --- START OF FIX ---
+        // 在执行任何操作之前，检查任务是否已被用户手动取消。
+        if (job.status == JobStatus.CANCELLED.value) {
+            AppLogger.suspendLog(appContext, "[Worker] Job $jobId was cancelled by the user. Stopping execution.")
+            // 返回 success 告知 WorkManager 此任务已完成，不要再安排重试。
+            return Result.success()
+        }
+        // --- END OF FIX ---
+
         val rule = ruleDao.getRuleById(job.ruleId) ?: run {
             AppLogger.suspendLog(appContext, "[Worker] Rule ${job.ruleId} for job $jobId not found. Failing.")
+            jobDao.updateStatusForFailure(jobId, JobStatus.FAILED_PERMANENTLY.value, "Rule not found", System.currentTimeMillis())
             return Result.failure()
         }
         val sms = smsDao.getSmsById(job.smsId) ?: run {
             AppLogger.suspendLog(appContext, "[Worker] SMS ${job.smsId} for job $jobId not found. Failing.")
+            jobDao.updateStatusForFailure(jobId, JobStatus.FAILED_PERMANENTLY.value, "SMS not found", System.currentTimeMillis())
             return Result.failure()
         }
 

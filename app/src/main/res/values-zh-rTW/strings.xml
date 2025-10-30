@@ -78,4 +78,27 @@
 
     <!-- Worker -->
     <string name="worker_new_sms_title">新簡訊來自: %1$s</string>
+    n    <!-- SMS Detail Dialog -->
+    <string name="sms_details_title">簡訊詳情</string>
+    <string name="detail_sender">傳送者:</string>
+    <string name="detail_received_at">接收時間:</string>
+    <string name="detail_content">簡訊內容:</string>
+    <string name="ok">確定</string>
+    <string name="status_label_forwarding_to">轉發狀態 - %1$s:</string>
+    <string name="status_pending">正在傳送...</string>
+    <string name="status_sent">已傳送</string>
+    <string name="status_cancelled">已取消傳送</string>
+    <string name="status_retrying">等待重試</string>
+    <string name="status_failed">永久失敗</string>
+    <string name="button_retry_now">立即重試</string>
+    <string name="button_cancel_send">取消傳送</string>
+    <string name="job_cancelled_toast">已取消轉發到 %1$s。</string>
+    <string name="job_retry_toast">即將重試轉發到 %1$s。</string>
+
+    <!-- Status Summaries for Main Screen -->
+    <string name="status_summary_all_sent">已轉發</string>
+    <string name="status_summary_all_cancelled">所有轉發已取消</string>
+    <string name="status_summary_forwarding_to">正在轉發至: %1$s</string>
+    <string name="status_summary_retrying">正在重試: </string>
+    <string name="status_summary_marker_cancelled">(已取消)</string>
 </resources>
