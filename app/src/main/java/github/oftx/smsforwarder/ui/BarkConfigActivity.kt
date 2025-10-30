@@ -1,9 +1,11 @@
 package github.oftx.smsforwarder.ui
 
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.View
 import android.widget.ArrayAdapter
 import androidx.activity.viewModels
+import androidx.annotation.AttrRes
 import androidx.core.widget.doOnTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -38,6 +40,8 @@ class BarkConfigActivity : BaseActivity() {
         setupCustomServerViews()
         setupEncryptionViews()
         setupValidation()
+        setupTestButton()
+        observeTestResults()
 
         ruleId = intent.getLongExtra(EXTRA_RULE_ID, -1L)
 
@@ -138,45 +142,91 @@ class BarkConfigActivity : BaseActivity() {
         }
     }
 
-    private fun saveRule() {
-        val name = binding.editTextRuleName.text.toString().trim()
+    private fun gatherConfigFromUi(): BarkConfig {
         val barkKey = binding.editTextBarkKey.text.toString().trim()
-
         val useCustomServer = binding.switchCustomServer.isChecked
-        val serverUrl = if (useCustomServer) {
-            binding.editTextServerUrl.text.toString().trim()
-        } else {
-            ""
-        }
-
-        if (name.isEmpty() || barkKey.isEmpty()) {
-            Snackbar.make(binding.root, R.string.error_name_and_key_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
-            return
-        }
+        val serverUrl = if (useCustomServer) binding.editTextServerUrl.text.toString().trim() else ""
         val isEncrypted = binding.switchEncryption.isChecked
         var encryptionKey: String? = null
         var iv: String? = null
         var algorithm: String? = null
         var mode: String? = null
+
         if (isEncrypted) {
             encryptionKey = binding.editTextEncryptionKey.text.toString()
-            val keyByteSize = encryptionKey.toByteArray(Charsets.UTF_8).size
+            iv = binding.editTextIv.text.toString()
+            algorithm = binding.dropdownAlgorithm.text.toString()
+            mode = binding.dropdownMode.text.toString()
+        }
+
+        return BarkConfig(
+            key = barkKey, serverUrl = serverUrl, isEncrypted = isEncrypted, algorithm = algorithm,
+            mode = mode, encryptionKey = encryptionKey, iv = iv
+        )
+    }
+
+    private fun setupTestButton() {
+        binding.buttonTest.setOnClickListener {
+            val config = gatherConfigFromUi()
+            if (config.key.isEmpty()) {
+                Snackbar.make(binding.root, R.string.error_name_and_key_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            binding.layoutTestResult.visibility = View.VISIBLE
+            binding.tvTestResult.text = "Testing..."
+            viewModel.testBarkConnection(
+                config,
+                "Test from SmsForwarder",
+                "This is a test message."
+            )
+        }
+    }
+
+    private fun observeTestResults() {
+        lifecycleScope.launch {
+            viewModel.testResultFlow.collectLatest { result ->
+                binding.layoutTestResult.visibility = View.VISIBLE
+                if (result == "Success") {
+                    binding.tvTestResult.text = getString(R.string.test_connection_success)
+                    // FINAL FIX: Use android.R.attr for framework theme attributes
+                    binding.tvTestResult.setTextColor(resolveThemeAttr(android.R.attr.colorPrimary))
+                } else {
+                    binding.tvTestResult.text = "${getString(R.string.test_connection_failed)} $result"
+                    // FINAL FIX: Use android.R.attr for framework theme attributes
+                    binding.tvTestResult.setTextColor(resolveThemeAttr(android.R.attr.colorError))
+                }
+            }
+        }
+    }
+
+    // Helper function to resolve theme attributes to color integers
+    private fun resolveThemeAttr(@AttrRes attrRes: Int): Int {
+        val typedValue = TypedValue()
+        theme.resolveAttribute(attrRes, typedValue, true)
+        return typedValue.data
+    }
+
+    private fun saveRule() {
+        val name = binding.editTextRuleName.text.toString().trim()
+        val config = gatherConfigFromUi()
+
+        if (name.isEmpty() || config.key.isEmpty()) {
+            Snackbar.make(binding.root, R.string.error_name_and_key_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
+            return
+        }
+
+        if (config.isEncrypted) {
+            val keyByteSize = config.encryptionKey?.toByteArray(Charsets.UTF_8)?.size ?: 0
             if (keyByteSize !in listOf(16, 24, 32)) {
                 Snackbar.make(binding.root, R.string.error_invalid_key_length, Snackbar.LENGTH_SHORT).show()
                 return
             }
-            iv = binding.editTextIv.text.toString()
-            algorithm = binding.dropdownAlgorithm.text.toString()
-            mode = binding.dropdownMode.text.toString()
-            if (mode == BarkConfig.MODE_CBC && iv.toByteArray(Charsets.UTF_8).size != 16) {
+            if (config.mode == BarkConfig.MODE_CBC && (config.iv?.toByteArray(Charsets.UTF_8)?.size ?: 0) != 16) {
                 Snackbar.make(binding.root, R.string.error_iv_length_for_cbc_must_be_16, Snackbar.LENGTH_SHORT).show()
                 return
             }
         }
-        val config = BarkConfig(
-            key = barkKey, serverUrl = serverUrl, isEncrypted = isEncrypted, algorithm = algorithm,
-            mode = mode, encryptionKey = encryptionKey, iv = iv
-        )
+        
         val configJson = Json.encodeToString(config)
         val ruleToSave = if (isUpdating) {
             viewModel.existingRule.value!!.copy(name = name, configJson = configJson)

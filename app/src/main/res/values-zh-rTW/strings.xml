@@ -23,6 +23,9 @@
     <string name="delete_rule_dialog_message">您確定要刪除規則「%1$s」嗎？此操作無法復原。</string>
 
     <!-- Bark Config Activity -->
+    <string name="test_connection">測試連線</string>
+    <string name="test_connection_success">測試成功！請檢查您的裝置是否收到通知。</string>
+    <string name="test_connection_failed">測試失敗：</string>
     <string name="bark_config_title_add">新增 Bark 規則</string>
     <string name="bark_config_title_edit">編輯 Bark 規則</string>
     <string name="hint_rule_name">規則名稱 (例如 我的iPhone)</string>
