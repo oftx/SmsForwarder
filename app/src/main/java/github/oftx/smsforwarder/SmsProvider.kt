@@ -54,12 +54,13 @@ class SmsProvider : ContentProvider() {
                 else -> throw IllegalArgumentException("Unknown URI: $uri")
             }
         } catch (e: Exception) {
-            runBlocking {
-                try {
+            // 尝试记录 Provider 自身的错误到日志表（如果可能）
+            try {
+                runBlocking {
                     db.logDao().insert(LogEntity(message = "[Provider-FATAL] Insert failed for URI $uri: ${e.message}"))
-                } catch (dbError: Exception) {
-                    android.util.Log.e("SmsFwd-Provider", "FATAL: Could not even write error log to DB.", dbError)
                 }
+            } catch (dbError: Exception) {
+                android.util.Log.e("SmsFwd-Provider", "FATAL: Could not even write error log to DB.", dbError)
             }
             null
         }
@@ -71,13 +72,13 @@ class SmsProvider : ContentProvider() {
         val newSms = SmsEntity(sender = sender, content = content)
 
         val newSmsId = runBlocking {
-            AppLogger.suspendLog(context!!, "[Provider] Received SMS from $sender, saving to DB.")
+            AppLogger.suspendLog(context!!, "[Provider] Received SMS from $sender via ContentProvider, saving to DB.")
             val insertedId = db.smsDao().insert(newSms)
             enforceSmsLimit()
             insertedId
         }
         if (newSmsId > 0) {
-            // Create a context that respects the in-app language setting
+            // 创建一个遵循应用内语言设置的 Context
             val localizedContext = LocaleManager.updateBaseContext(context!!)
             val localizedTitle = localizedContext.getString(R.string.worker_new_sms_title, sender)
             scheduleForwarding(newSmsId, localizedTitle)

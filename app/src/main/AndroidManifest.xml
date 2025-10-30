@@ -43,19 +43,11 @@
         <activity android:name=".ui.BarkConfigActivity" />
         <activity android:name=".ui.LogActivity" android:label="@string/log_activity_title" />
 
+        <!-- 核心组件：ContentProvider，用于接收来自 Xposed Hook 的数据，即使 App 被停止也能被唤醒 -->
         <provider
             android:name=".SmsProvider"
             android:authorities="github.oftx.smsforwarder.provider"
             android:exported="true" />
             
-        <!-- New BroadcastReceiver Registration -->
-        <receiver
-            android:name=".SmsReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="github.oftx.smsforwarder.ACTION_SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
-
     </application>
 </manifest>

@@ -1,7 +1,8 @@
 package github.oftx.smsforwarder
 
 import android.app.Application
-import android.content.Intent
+import android.content.ContentValues
+import android.net.Uri
 import android.telephony.SmsMessage
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
@@ -12,8 +13,8 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 class SmsHook : IXposedHookLoadPackage {
 
     companion object {
-        private const val MODULE_PACKAGE_NAME = "github.oftx.smsforwarder"
-        private const val ACTION_SMS_RECEIVED = "github.oftx.smsforwarder.ACTION_SMS_RECEIVED"
+        // 定义 ContentProvider 的 URI
+        private val SMS_PROVIDER_URI = Uri.parse("content://github.oftx.smsforwarder.provider/sms")
 
         private val TARGET_PACKAGES = setOf(
             "com.android.mms",
@@ -84,8 +85,8 @@ class SmsHook : IXposedHookLoadPackage {
                     val content = message.messageBody
 
                     if (sender != null && content != null) {
-                        XposedBridge.log("SmsFwd: HOOK TRIGGERED! SMS Intercepted from: $sender. Sending broadcast...")
-                        sendSmsBroadcast(sender, content)
+                        XposedBridge.log("SmsFwd: HOOK TRIGGERED! SMS Intercepted from: $sender. Inserting via ContentProvider...")
+                        insertSmsViaProvider(sender, content)
                     }
                 }
             })
@@ -96,21 +97,22 @@ class SmsHook : IXposedHookLoadPackage {
         }
     }
 
-    private fun sendSmsBroadcast(sender: String, content: String) {
+    private fun insertSmsViaProvider(sender: String, content: String) {
         try {
             val activityThreadClass = XposedHelpers.findClass("android.app.ActivityThread", null)
             val application = XposedHelpers.callStaticMethod(activityThreadClass, "currentApplication") as Application
             val context = application.applicationContext
 
-            val intent = Intent(ACTION_SMS_RECEIVED).apply {
-                putExtra("sender", sender)
-                putExtra("content", content)
-                setPackage(MODULE_PACKAGE_NAME)
+            val values = ContentValues().apply {
+                put("sender", sender)
+                put("content", content)
             }
-            context.sendBroadcast(intent)
-            XposedBridge.log("SmsFwd: Broadcast sent successfully.")
+            
+            // 使用 ContentResolver 插入数据，这将自动唤醒目标应用的 Provider（即使应用已被强制停止）
+            context.contentResolver.insert(SMS_PROVIDER_URI, values)
+            XposedBridge.log("SmsFwd: SMS data inserted via ContentProvider successfully.")
         } catch (t: Throwable) {
-            XposedBridge.log("SmsFwd-FATAL: Failed to send broadcast.")
+            XposedBridge.log("SmsFwd-FATAL: Failed to insert SMS via ContentProvider.")
             XposedBridge.log(t)
         }
     }
