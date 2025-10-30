@@ -35,6 +35,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val languagePref = findPreference<ListPreference>("pref_language")
         val smsLimitPref = findPreference<EditTextPreference>("pref_sms_limit")
         val clearSmsPref = findPreference<Preference>("pref_clear_sms")
+        val retryAttemptsPref = findPreference<EditTextPreference>("pref_max_retry_attempts")
         val viewLogsPref = findPreference<Preference>("pref_view_logs")
         val batteryPref = findPreference<Preference>("pref_ignore_battery_optimizations")
 
@@ -70,6 +71,16 @@ class SettingsFragment : PreferenceFragmentCompat() {
         smsLimitPref?.setOnBindEditTextListener { editText ->
             editText.hint = getString(R.string.pref_sms_limit_dialog_hint)
         }
+
+        // 4. Max Retry Attempts Preference
+        retryAttemptsPref?.summaryProvider =
+            Preference.SummaryProvider<EditTextPreference> { preference ->
+                val text = preference.text
+                // Use default value if text is invalid
+                val value = text?.toIntOrNull() ?: 5
+                getString(R.string.pref_max_retry_attempts_summary, value.toString())
+            }
+        retryAttemptsPref?.dialogTitle = getString(R.string.pref_max_retry_attempts_dialog_title)
 
         // 4. Click listeners
         viewLogsPref?.setOnPreferenceClickListener {

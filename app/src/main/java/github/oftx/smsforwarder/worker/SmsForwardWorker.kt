@@ -134,17 +134,31 @@ class SmsForwardWorker(
 
     private suspend fun handleFailure(jobId: Long, errorMessage: String, ruleName: String): Result {
         AppLogger.suspendLog(appContext, "[Worker] Job $jobId to '$ruleName' FAILED. Reason: $errorMessage")
+
+        val job = jobDao.getJobById(jobId) ?: run {
+            AppLogger.suspendLog(appContext, "[Worker] FATAL: Could not find job $jobId to handle failure.")
+            return Result.failure() // Job doesn't exist, can't proceed.
+        }
+
         val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(appContext)
         val shouldRetry = sharedPrefs.getBoolean("pref_retry_on_fail", true)
+        val maxRetriesStr = sharedPrefs.getString("pref_max_retry_attempts", "5")
+        val maxRetries = maxRetriesStr?.toIntOrNull() ?: 5
 
-        val newStatus = if (shouldRetry) JobStatus.FAILED_RETRY.value else JobStatus.FAILED_PERMANENTLY.value
-        jobDao.updateStatusForFailure(jobId, newStatus, errorMessage, System.currentTimeMillis())
+        // The next attempt will be `job.attempts + 1`.
+        val upcomingAttemptNumber = job.attempts + 1
 
-        if (shouldRetry) {
-            AppLogger.suspendLog(appContext, "[Worker] Scheduling retry for job $jobId.")
+        if (shouldRetry && upcomingAttemptNumber <= maxRetries) {
+            // We are within the retry limit
+            jobDao.updateStatusForFailure(jobId, JobStatus.FAILED_RETRY.value, errorMessage, System.currentTimeMillis())
+            AppLogger.suspendLog(appContext, "[Worker] Scheduling retry ${upcomingAttemptNumber}/$maxRetries for job $jobId.")
             return Result.retry()
         } else {
-            AppLogger.suspendLog(appContext, "[Worker] Job $jobId will not be retried.")
+            // We have exceeded the retry limit or retries are disabled
+            val reason = if (!shouldRetry) "Retry is disabled" else "Max retries ($maxRetries) reached"
+            val finalErrorMessage = "[$reason] $errorMessage"
+            jobDao.updateStatusForFailure(jobId, JobStatus.FAILED_PERMANENTLY.value, finalErrorMessage, System.currentTimeMillis())
+            AppLogger.suspendLog(appContext, "[Worker] Job $jobId failed permanently. Reason: $reason.")
             return Result.failure()
         }
     }

@@ -60,6 +60,9 @@
     <string name="settings_category_general">General</string>
     <string name="pref_retry_on_fail_title">Retry on Fail</string>
     <string name="pref_retry_on_fail_summary">Automatically resend in the background when network or server issues occur</string>
+    <string name="pref_max_retry_attempts_title">Maximum Retry Attempts</string>
+    <string name="pref_max_retry_attempts_summary">%s attempts</string>
+    <string name="pref_max_retry_attempts_dialog_title">Enter max attempts</string>
     <string name="pref_view_logs_title">View Logs</string>
     <string name="pref_view_logs_summary">Open application and forwarding logs</string>
 

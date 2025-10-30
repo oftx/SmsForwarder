@@ -60,6 +60,9 @@
     <string name="settings_category_general">一般</string>
     <string name="pref_retry_on_fail_title">轉發失敗後重試</string>
     <string name="pref_retry_on_fail_summary">當網路或目標伺服器出現問題時，自動在背景重新傳送</string>
+    <string name="pref_max_retry_attempts_title">最大重試次數</string>
+    <string name="pref_max_retry_attempts_summary">最多重試 %s 次</string>
+    <string name="pref_max_retry_attempts_dialog_title">輸入最大次數</string>
     <string name="pref_view_logs_title">檢視日誌</string>
     <string name="pref_view_logs_summary">開啟應用程式和轉發日誌記錄</string>
 

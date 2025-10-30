@@ -13,6 +13,13 @@
             app:title="@string/pref_retry_on_fail_title"
             app:summary="@string/pref_retry_on_fail_summary"
             app:defaultValue="true" />
+        <EditTextPreference
+            app:key="pref_max_retry_attempts"
+            app:title="@string/pref_max_retry_attempts_title"
+            app:defaultValue="5"
+            android:inputType="number"
+            app:dependency="pref_retry_on_fail"
+            app:useSimpleSummaryProvider="true" />
         <Preference
             app:key="pref_view_logs"
             app:title="@string/pref_view_logs_title"
