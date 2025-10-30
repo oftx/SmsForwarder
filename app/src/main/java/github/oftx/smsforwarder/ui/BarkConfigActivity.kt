@@ -173,11 +173,11 @@ class BarkConfigActivity : BaseActivity() {
                 return@setOnClickListener
             }
             binding.layoutTestResult.visibility = View.VISIBLE
-            binding.tvTestResult.text = "Testing..."
+            binding.tvTestResult.text = getString(R.string.testing_connection)
             viewModel.testBarkConnection(
                 config,
-                "Test from SmsForwarder",
-                "This is a test message."
+                getString(R.string.test_push_title),
+                getString(R.string.test_push_body)
             )
         }
     }
@@ -188,19 +188,16 @@ class BarkConfigActivity : BaseActivity() {
                 binding.layoutTestResult.visibility = View.VISIBLE
                 if (result == "Success") {
                     binding.tvTestResult.text = getString(R.string.test_connection_success)
-                    // FINAL FIX: Use android.R.attr for framework theme attributes
-                    binding.tvTestResult.setTextColor(resolveThemeAttr(android.R.attr.colorPrimary))
+                    binding.tvTestResult.setTextColor(getColorFromAttr(android.R.attr.colorPrimary))
                 } else {
-                    binding.tvTestResult.text = "${getString(R.string.test_connection_failed)} $result"
-                    // FINAL FIX: Use android.R.attr for framework theme attributes
-                    binding.tvTestResult.setTextColor(resolveThemeAttr(android.R.attr.colorError))
+                    binding.tvTestResult.text = getString(R.string.test_connection_failed_with_reason, result)
+                    binding.tvTestResult.setTextColor(getColorFromAttr(android.R.attr.colorError))
                 }
             }
         }
     }
 
-    // Helper function to resolve theme attributes to color integers
-    private fun resolveThemeAttr(@AttrRes attrRes: Int): Int {
+    private fun getColorFromAttr(@AttrRes attrRes: Int): Int {
         val typedValue = TypedValue()
         theme.resolveAttribute(attrRes, typedValue, true)
         return typedValue.data

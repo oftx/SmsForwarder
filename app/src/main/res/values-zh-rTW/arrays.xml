@@ -6,4 +6,13 @@
         <item>简体中文</item>
         <item>繁體中文</item>
     </string-array>
+
+    <!-- Time Format Preference -->
+    <string-array name="time_format_entries">
+        <item>跟隨系統</item>
+        <item>年/月/日 時:分:秒</item>
+        <item>月/日/年 時:分:秒</item>
+        <item>日/月/年 時:分:秒</item>
+        <item>日-月-年 時:分:秒</item>
+    </string-array>
 </resources>

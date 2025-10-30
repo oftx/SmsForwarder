@@ -31,4 +31,20 @@
         <item>com.android.mms</item> <!-- MIUI, etc. -->
         <item>com.google.android.apps.messaging</item> <!-- Google Messages (Stock Android) -->
     </string-array>
+
+    <!-- Time Format Preference -->
+    <string-array name="time_format_entries">
+        <item>System Default</item>
+        <item>YYYY/MM/DD HH:mm:ss</item>
+        <item>MM/DD/YYYY HH:mm:ss</item>
+        <item>DD/MM/YYYY HH:mm:ss</item>
+        <item>DD-MM-YYYY HH:mm:ss</item>
+    </string-array>
+    <string-array name="time_format_entry_values" translatable="false">
+        <item>system</item>
+        <item>yyyy/MM/dd HH:mm:ss</item>
+        <item>MM/dd/yyyy HH:mm:ss</item>
+        <item>dd/MM/yyyy HH:mm:ss</item>
+        <item>dd-MM-yyyy HH:mm:ss</item>
+    </string-array>
 </resources>

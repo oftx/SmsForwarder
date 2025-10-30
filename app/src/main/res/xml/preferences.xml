@@ -32,6 +32,13 @@
             app:entryValues="@array/language_entry_values"
             app:defaultValue="system"
             app:useSimpleSummaryProvider="true" />
+        <ListPreference
+            app:key="pref_time_format"
+            app:title="@string/pref_time_format_title"
+            app:entries="@array/time_format_entries"
+            app:entryValues="@array/time_format_entry_values"
+            app:defaultValue="system"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/settings_category_data_management">

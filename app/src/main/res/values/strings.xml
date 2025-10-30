@@ -23,9 +23,13 @@
     <string name="delete_rule_dialog_message">Are you sure you want to delete the rule \"%1$s\"? This action cannot be undone.</string>
 
     <!-- Bark Config Activity -->
+    <string name="testing_connection">Testing…</string>
+    <string name="test_push_title">Test from SmsForwarder</string>
+    <string name="test_push_body">This is a test message.</string>
+    <string name="test_connection_failed_with_reason">Test failed: %1$s</string>
     <string name="test_connection">Test Connection</string>
     <string name="test_connection_success">Test successful! Check your device for a notification.</string>
-    <string name="test_connection_failed">Test failed:</string>
+    <string name="test_connection_failed">Test failed</string>
     <string name="bark_config_title_add">Add Bark Rule</string>
     <string name="bark_config_title_edit">Edit Bark Rule</string>
     <string name="hint_rule_name">Rule Name (e.g. My iPhone)</string>
@@ -66,6 +70,7 @@
     <string name="pref_monet_theme_title">Monet Theme</string>
     <string name="pref_monet_theme_summary">Follow system wallpaper color (Android 12+)</string>
     <string name="pref_language_title">Language</string>
+    <string name="pref_time_format_title">Time Format</string>
 
     <string name="settings_category_data_management">Data Management</string>
     <string name="pref_sms_limit_title">Message Storage Limit</string>

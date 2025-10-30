@@ -76,7 +76,8 @@ class SmsDetailDialogFragment : BottomSheetDialogFragment() {
             viewModel.uiState.collectLatest { state ->
                 state.sms?.let {
                     binding.tvDetailSender.text = getString(R.string.detail_sender) + " " + it.sender
-                    binding.tvDetailTimestamp.text = getString(R.string.detail_received_at) + " " + TimeUtil.getAbsoluteTime(it.timestamp)
+                    // Pass context to get the user-defined time format
+                    binding.tvDetailTimestamp.text = getString(R.string.detail_received_at) + " " + TimeUtil.getAbsoluteTime(requireContext(), it.timestamp)
                     binding.tvDetailContent.text = it.content
                 }
                 statusAdapter.submitList(state.jobs)
