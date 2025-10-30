@@ -1,5 +1,8 @@
 package github.oftx.smsforwarder.ui
 
+import android.content.Context
+import android.text.SpannableStringBuilder
+import android.text.style.StrikethroughSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,18 +11,19 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import github.oftx.smsforwarder.R
+import github.oftx.smsforwarder.database.ForwardingJobWithRuleName
+import github.oftx.smsforwarder.database.JobStatus
 
 sealed class ListItem {
     data class Sms(val item: SmsItem) : ListItem()
 }
 
-// statusSummary 现在是 CharSequence
 data class SmsItem(
     val id: Long,
     val sender: String,
     val content: String,
     val timestamp: Long,
-    val statusSummary: CharSequence // 类型已更改
+    val jobs: List<ForwardingJobWithRuleName> // Changed from statusSummary
 )
 
 class MainAdapter(
@@ -48,9 +52,10 @@ class MainAdapter(
             contentTextView.text = smsItem.content
             timestampTextView.text = TimeUtil.formatDefault(itemView.context, smsItem.timestamp)
 
-            if (smsItem.statusSummary.isNotEmpty()) {
+            val summaryText = formatStatusSummary(itemView.context, smsItem.jobs)
+            if (summaryText.isNotEmpty()) {
                 statusSummaryTextView.visibility = View.VISIBLE
-                statusSummaryTextView.text = smsItem.statusSummary
+                statusSummaryTextView.text = summaryText
             } else {
                 statusSummaryTextView.visibility = View.GONE
             }
@@ -65,6 +70,54 @@ class MainAdapter(
 
     override fun onBindViewHolder(holder: SmsViewHolder, position: Int) {
         holder.bind((getItem(position) as ListItem.Sms).item)
+    }
+
+    private fun formatStatusSummary(context: Context, jobs: List<ForwardingJobWithRuleName>): CharSequence {
+        if (jobs.isEmpty()) return ""
+
+        val total = jobs.size
+        val successCount = jobs.count { it.job.status == JobStatus.SUCCESS.value }
+        val cancelledCount = jobs.count { it.job.status == JobStatus.CANCELLED.value }
+
+        if (successCount == total) {
+            return context.getString(R.string.status_summary_all_sent)
+        }
+        if (cancelledCount == total && total > 0) {
+            return context.getString(R.string.status_summary_all_cancelled)
+        }
+
+        val summaryBuilder = SpannableStringBuilder()
+
+        jobs.forEachIndexed { index, item ->
+            val start = summaryBuilder.length
+            summaryBuilder.append(item.ruleName)
+
+            val marker = when (item.job.status) {
+                JobStatus.SUCCESS.value -> "(✓)"
+                JobStatus.FAILED_RETRY.value, JobStatus.FAILED_PERMANENTLY.value -> "(✘)"
+                else -> ""
+            }
+            summaryBuilder.append(marker)
+
+            if (item.job.status == JobStatus.CANCELLED.value) {
+                summaryBuilder.setSpan(StrikethroughSpan(), start, summaryBuilder.length, 0)
+            }
+
+            if (index < jobs.size - 1) {
+                summaryBuilder.append("、")
+            }
+        }
+
+        val isRetrying = jobs.any { it.job.status == JobStatus.FAILED_RETRY.value }
+        val isForwarding = jobs.any { it.job.status == JobStatus.PENDING.value }
+
+        if (isRetrying) {
+            summaryBuilder.insert(0, context.getString(R.string.status_summary_retrying))
+        } else if (isForwarding) {
+            summaryBuilder.insert(0, context.getString(R.string.status_summary_forwarding_to))
+        }
+
+        return summaryBuilder
     }
 }
 
