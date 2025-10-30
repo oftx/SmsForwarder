@@ -98,7 +98,6 @@
     <!-- Status Summaries for Main Screen -->
     <string name="status_summary_all_sent">Forwarded</string>
     <string name="status_summary_all_cancelled">All forwarding cancelled</string>
-    <string name="status_summary_forwarding_to">Forwarding to: </string>
-    <string name="status_summary_retrying">Retrying: </string>
-    <string name="status_summary_marker_cancelled">(Cancelled)</string>
+    <string name="status_summary_forwarding_to">Forwarding to:\u0020</string>
+    <string name="status_summary_retrying">Retrying:\u0020</string>
 </resources>

@@ -1,6 +1,8 @@
 package github.oftx.smsforwarder.ui
 
 import android.app.Application
+import android.text.SpannableStringBuilder
+import android.text.style.StrikethroughSpan
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -43,47 +45,51 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             initialValue = emptyList()
         )
 
-    private fun formatStatusSummary(jobs: List<ForwardingJobWithRuleName>): String {
-        if (jobs.isEmpty()) return "" // 对于旧短信，没有任务，不显示状态
+    private fun formatStatusSummary(jobs: List<ForwardingJobWithRuleName>): CharSequence {
+        if (jobs.isEmpty()) return ""
 
         val total = jobs.size
         val successCount = jobs.count { it.job.status == JobStatus.SUCCESS.value }
         val cancelledCount = jobs.count { it.job.status == JobStatus.CANCELLED.value }
         val context = getApplication<Application>().applicationContext
 
-        // --- START OF REFACTORED LOGIC ---
-
-        // 1. 处理所有任务都处于同一种最终状态的简单情况
         if (successCount == total) {
             return context.getString(R.string.status_summary_all_sent)
         }
-        if (cancelledCount == total) {
+        if (cancelledCount == total && total > 0) {
+             // 如果全部都取消了，也给一个整体状态
             return context.getString(R.string.status_summary_all_cancelled)
         }
 
-        // 2. 处理混合状态：构建每个任务的状态部分
+        val summaryBuilder = SpannableStringBuilder()
         val hasPendingOrRetry = jobs.any { it.job.status in listOf(JobStatus.PENDING.value, JobStatus.FAILED_RETRY.value) }
 
-        val statusParts = jobs.map {
-            val marker = when(it.job.status) {
+        jobs.forEachIndexed { index, item ->
+            val start = summaryBuilder.length
+            summaryBuilder.append(item.ruleName)
+            
+            val marker = when(item.job.status) {
                 JobStatus.SUCCESS.value -> "(✓)"
-                JobStatus.CANCELLED.value -> context.getString(R.string.status_summary_marker_cancelled) // e.g., "(Cancelled)"
                 JobStatus.FAILED_RETRY.value, JobStatus.FAILED_PERMANENTLY.value -> "(✘)"
-                else -> "" // PENDING or other states get no marker
+                else -> ""
             }
-            it.ruleName + marker
+            summaryBuilder.append(marker)
+
+            if (item.job.status == JobStatus.CANCELLED.value) {
+                summaryBuilder.setSpan(StrikethroughSpan(), start, summaryBuilder.length, 0)
+            }
+
+            if (index < jobs.size - 1) {
+                summaryBuilder.append("、")
+            }
         }
 
-        // 3. 根据是否存在待处理任务来确定前缀
-        val prefix = if (hasPendingOrRetry) {
-            context.getString(R.string.status_summary_retrying)
-        } else {
-            // 如果没有待重试任务，但不是全部成功，说明是混合状态（如部分成功、部分取消）
-            context.getString(R.string.status_summary_forwarding_to)
+        if (hasPendingOrRetry) {
+            val prefix = context.getString(R.string.status_summary_retrying)
+            summaryBuilder.insert(0, prefix)
         }
 
-        return prefix + statusParts.joinToString("、")
-        // --- END OF REFACTORED LOGIC ---
+        return summaryBuilder
     }
 }
 

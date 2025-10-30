@@ -9,41 +9,35 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import github.oftx.smsforwarder.R
 
-// Models for the list
 sealed class ListItem {
-    // SmsItem 现在包含 statusSummary
     data class Sms(val item: SmsItem) : ListItem()
 }
 
-// SmsItem 现在包含 statusSummary
+// statusSummary 现在是 CharSequence
 data class SmsItem(
     val id: Long,
     val sender: String,
     val content: String,
     val timestamp: Long,
-    val statusSummary: String // 新增字段
+    val statusSummary: CharSequence // 类型已更改
 )
 
 class MainAdapter(
-    private val onItemClicked: (Long) -> Unit // 回调只传递 smsId
+    private val onItemClicked: (Long) -> Unit
 ) : ListAdapter<ListItem, MainAdapter.SmsViewHolder>(MainDiffCallback()) {
-
-    companion object {
-        private const val TYPE_SMS = 0
-    }
 
     inner class SmsViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val senderTextView: TextView = view.findViewById(R.id.tv_sender)
         private val contentTextView: TextView = view.findViewById(R.id.tv_content)
         private val timestampTextView: TextView = view.findViewById(R.id.tv_timestamp)
-        private val statusSummaryTextView: TextView = view.findViewById(R.id.tv_status_summary) // 新增 View
+        private val statusSummaryTextView: TextView = view.findViewById(R.id.tv_status_summary)
 
         init {
             itemView.setOnClickListener {
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     val item = getItem(position) as ListItem.Sms
-                    onItemClicked(item.item.id) // 传递 ID
+                    onItemClicked(item.item.id)
                 }
             }
         }
@@ -54,7 +48,6 @@ class MainAdapter(
             contentTextView.text = smsItem.content
             timestampTextView.text = TimeUtil.formatDefault(itemView.context, smsItem.timestamp)
 
-            // 绑定状态摘要
             if (smsItem.statusSummary.isNotEmpty()) {
                 statusSummaryTextView.visibility = View.VISIBLE
                 statusSummaryTextView.text = smsItem.statusSummary
@@ -62,10 +55,6 @@ class MainAdapter(
                 statusSummaryTextView.visibility = View.GONE
             }
         }
-    }
-
-    override fun getItemViewType(position: Int): Int {
-        return TYPE_SMS
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SmsViewHolder {
@@ -85,6 +74,7 @@ class MainDiffCallback : DiffUtil.ItemCallback<ListItem>() {
     }
 
     override fun areContentsTheSame(oldItem: ListItem, newItem: ListItem): Boolean {
-        return oldItem == newItem
+        // CharSequence.toString() is used for content comparison
+        return oldItem.toString() == newItem.toString()
     }
 }

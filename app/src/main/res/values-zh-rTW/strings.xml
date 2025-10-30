@@ -98,7 +98,6 @@
     <!-- Status Summaries for Main Screen -->
     <string name="status_summary_all_sent">已轉發</string>
     <string name="status_summary_all_cancelled">所有轉發已取消</string>
-    <string name="status_summary_forwarding_to">正在轉發至: %1$s</string>
-    <string name="status_summary_retrying">正在重試: </string>
-    <string name="status_summary_marker_cancelled">(已取消)</string>
+    <string name="status_summary_forwarding_to">正在轉發至:\u0020</string>
+    <string name="status_summary_retrying">正在重試:\u0020</string>
 </resources>
