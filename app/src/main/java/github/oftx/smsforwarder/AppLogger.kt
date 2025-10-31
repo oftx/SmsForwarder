@@ -12,6 +12,7 @@ object AppLogger {
     private const val MODULE_PACKAGE_NAME = "github.oftx.smsforwarder"
     private val scope = CoroutineScope(Dispatchers.IO)
 
+    @Suppress("unused") // Suppress warning: This is called externally via Xposed Hook
     fun logFromHook(context: Context, message: String) {
         val fullMessage = "[HOOK] $message"
         de.robv.android.xposed.XposedBridge.log("SmsFwd-Hook: $message")
@@ -20,10 +21,7 @@ object AppLogger {
             val intent = Intent(SmsReceiver.ACTION_LOG_RECEIVED).apply {
                 putExtra("message", fullMessage)
                 setPackage(MODULE_PACKAGE_NAME)
-                // --- START OF FINAL FIX ---
-                // Also add this flag for logging broadcasts
                 addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
-                // --- END OF FINAL FIX ---
             }
             context.sendBroadcast(intent)
         } catch (e: Exception) {
