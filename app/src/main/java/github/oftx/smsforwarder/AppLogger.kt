@@ -1,44 +1,49 @@
 package github.oftx.smsforwarder
 
-import android.content.ContentValues
 import android.content.Context
-import android.net.Uri
+import android.content.Intent
+import github.oftx.smsforwarder.database.LogEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 object AppLogger {
 
-    private val LOG_PROVIDER_URI = Uri.parse("content://github.oftx.smsforwarder.provider/log")
+    private const val MODULE_PACKAGE_NAME = "github.oftx.smsforwarder"
     private val scope = CoroutineScope(Dispatchers.IO)
 
     fun logFromHook(context: Context, message: String) {
+        val fullMessage = "[HOOK] $message"
         de.robv.android.xposed.XposedBridge.log("SmsFwd-Hook: $message")
-        writeLog(context, "[HOOK] $message")
+        
+        try {
+            val intent = Intent(SmsReceiver.ACTION_LOG_RECEIVED).apply {
+                putExtra("message", fullMessage)
+                setPackage(MODULE_PACKAGE_NAME)
+                // --- START OF FINAL FIX ---
+                // Also add this flag for logging broadcasts
+                addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
+                // --- END OF FINAL FIX ---
+            }
+            context.sendBroadcast(intent)
+        } catch (e: Exception) {
+            try {
+                de.robv.android.xposed.XposedBridge.log("SmsFwd-FATAL: Failed to write log via broadcast: ${e.message}")
+            } catch (_: Throwable) { }
+        }
     }
 
     fun log(context: Context, message: String) {
         scope.launch {
-            writeLog(context, "[APP] $message")
+            suspendLog(context, "[APP] $message")
         }
     }
 
     suspend fun suspendLog(context: Context, message: String) {
-        writeLog(context, "[APP] $message")
-    }
-
-    private fun writeLog(context: Context, fullMessage: String) {
         try {
-            val values = ContentValues().apply {
-                put("message", fullMessage)
-            }
-            context.applicationContext.contentResolver.insert(LOG_PROVIDER_URI, values)
+            AppDatabase.getDatabase(context).logDao().insert(LogEntity(message = message))
         } catch (e: Exception) {
-            try {
-                de.robv.android.xposed.XposedBridge.log("SmsFwd-FATAL: Failed to write log to provider: ${e.message}")
-            } catch (t: Throwable) {
-                android.util.Log.e("SmsForwarder", "Failed to write log to provider", e)
-            }
+             android.util.Log.e("SmsForwarderAppLogger", "Failed to write app log to DB", e)
         }
     }
 }
