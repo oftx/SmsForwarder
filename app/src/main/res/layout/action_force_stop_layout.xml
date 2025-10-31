@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="?attr/actionButtonStyle"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingHorizontal="8dp">
+
+    <TextView
+        android:id="@+id/tv_target_app_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxWidth="120dp"
+        android:maxLines="1"
+        android:text="target.app.name"
+        android:textColor="?attr/colorOnSurface"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+    <ImageButton
+        android:id="@+id/btn_force_stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_cancel"
+        app:tint="?attr/colorError" />
+
+</LinearLayout>

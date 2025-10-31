@@ -100,9 +100,21 @@
     <string name="import_strategy_replace">清空并替换</string>
     <string name="import_action">导入</string>
 
+    <!-- START: New Hook Settings Strings -->
+    <string name="settings_category_hook">Hook 设置 (高级)</string>
+    <string name="pref_start_hook_debug_title">开始 Hook 点分析</string>
+    <string name="pref_start_hook_debug_summary">生成实时调试日志，帮助在不受支持的设备上找到正确的 Hook 点。</string>
+    <string name="pref_hook_target_app_title">目标 App 包名</string>
+    <string name="pref_hook_target_app_summary">覆盖要 Hook 的 App。留空则使用默认列表。</string>
+    <string name="pref_hook_custom_class_title">自定义 Hook 类名</string>
+    <string name="pref_hook_custom_class_summary">包含 onReceive 方法的类。请从分析日志中查找。</string>
+    <string name="hook_debug_log_activity_title">Hook 分析日志</string>
+    <string name="hook_debug_log_instructions">来自 Xposed 模块的日志将在此处实时显示。请打开您的短信 App 以触发日志记录。日志文本可长按选择和复制。</string>
+    <!-- END: New Hook Settings Strings -->
+
     <!-- Worker -->
     <string name="worker_new_sms_title">新短信来自: %1$s</string>
-    n    <!-- SMS Detail Dialog -->
+    <!-- SMS Detail Dialog -->
     <string name="sms_details_title">短信详情</string>
     <string name="detail_sender">发送者:</string>
     <string name="detail_received_at">接收时间:</string>

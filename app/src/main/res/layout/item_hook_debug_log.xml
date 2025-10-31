@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/tv_log_message"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fontFamily="monospace"
+    android:paddingStart="16dp"
+    android:paddingTop="4dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="4dp"
+    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+    android:textIsSelectable="true"
+    tools:text="SmsFwd-Hierarchy: LEVEL 0: com.google.android.apps.messaging.shared.receiver.SmsDeliverReceiver" />

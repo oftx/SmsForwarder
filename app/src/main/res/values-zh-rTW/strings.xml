@@ -100,9 +100,21 @@
     <string name="import_strategy_replace">清除並取代</string>
     <string name="import_action">匯入</string>
 
+    <!-- START: New Hook Settings Strings -->
+    <string name="settings_category_hook">Hook 設定 (進階)</string>
+    <string name="pref_start_hook_debug_title">開始 Hook 點分析</string>
+    <string name="pref_start_hook_debug_summary">產生即時除錯日誌，幫助在不受支援的裝置上找到正確的 Hook 點。</string>
+    <string name="pref_hook_target_app_title">目標 App 套件名稱</string>
+    <string name="pref_hook_target_app_summary">覆寫要 Hook 的 App。留空則使用預設列表。</string>
+    <string name="pref_hook_custom_class_title">自訂 Hook 類別名稱</string>
+    <string name="pref_hook_custom_class_summary">包含 onReceive 方法的類別。請從分析日誌中尋找。</string>
+    <string name="hook_debug_log_activity_title">Hook 分析日誌</string>
+    <string name="hook_debug_log_instructions">來自 Xposed 模組的日誌將在此處即時顯示。請開啟您的簡訊 App 以觸發日誌記錄。日誌文字可長按選取和複製。</string>
+    <!-- END: New Hook Settings Strings -->
+
     <!-- Worker -->
     <string name="worker_new_sms_title">新簡訊來自: %1$s</string>
-    n    <!-- SMS Detail Dialog -->
+    <!-- SMS Detail Dialog -->
     <string name="sms_details_title">簡訊詳情</string>
     <string name="detail_sender">傳送者:</string>
     <string name="detail_received_at">接收時間:</string>
@@ -134,6 +146,6 @@
 
     <!-- Toasts -->
     <string name="battery_settings_toast">請進入「電池」或「耗電管理」選項進行設定</string>
-    <string name="cannot_open_settings_toast">無法自動跳轉，請手動進入系統設定</string>
+    <string name="cannot_open_settings_toast">無法自動跳轉，請手動进入系統設定</string>
     <!-- END: New Strings for Internationalization -->
 </resources>

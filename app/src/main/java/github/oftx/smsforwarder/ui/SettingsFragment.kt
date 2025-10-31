@@ -1,15 +1,19 @@
 package github.oftx.smsforwarder.ui
 
-import android.app.Dialog
-import android.content.DialogInterface
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -20,10 +24,12 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 import github.oftx.smsforwarder.R
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,6 +40,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private val viewModel: SettingsViewModel by viewModels {
         SettingsViewModelFactory(requireActivity().application)
     }
+
+    private val appSelectionLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.getStringExtra(AppListActivity.EXTRA_PACKAGE_NAME)?.let { packageName ->
+                    saveTargetAppPackage(packageName)
+                }
+            }
+        }
 
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         uri?.let {
@@ -58,104 +73,223 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        // This is the key change. It forces the preference file to be created with permissions
+        // that allow other processes (like the Xposed hook) to read it.
+        // Although deprecated, it is the standard and necessary method for Xposed modules.
+        preferenceManager.sharedPreferencesMode = Context.MODE_WORLD_READABLE
         setPreferencesFromResource(R.xml.preferences, rootKey)
+        
+        setupHookPreferences()
+        setupOtherPreferences()
+    }
 
-        val monetPref = findPreference<SwitchPreferenceCompat>("pref_monet_theme")
-        val languagePref = findPreference<ListPreference>("pref_language")
-        val smsLimitPref = findPreference<EditTextPreference>("pref_sms_limit")
-        val clearSmsPref = findPreference<Preference>("pref_clear_sms")
-        val retryAttemptsPref = findPreference<EditTextPreference>("pref_max_retry_attempts")
-        val viewLogsPref = findPreference<Preference>("pref_view_logs")
-        val batteryPref = findPreference<Preference>("pref_ignore_battery_optimizations")
-        val exportPref = findPreference<Preference>("pref_export_data")
-        val importPref = findPreference<Preference>("pref_import_data")
+    override fun onResume() {
+        super.onResume()
+        updateHookSummaries()
+        // As a fallback, manually set permissions again when the screen is viewed.
+        setPreferencesReadable()
+    }
 
-        // 1. Monet/Dynamic Color Preference
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            monetPref?.setOnPreferenceChangeListener { _, _ ->
-                // Use post to delay, ensuring the preference value is saved before recreation
-                view?.post { triggerRecreate() }
-                true
+    private fun setPreferencesReadable() {
+        // This makes sure the preference file is readable by the hook.
+        try {
+            val prefsDir = File(requireContext().applicationInfo.dataDir, "shared_prefs")
+            val prefsFile = File(prefsDir, "${requireContext().packageName}_preferences.xml")
+            if (prefsFile.exists()) {
+                // Set read permission for "others".
+                prefsFile.setReadable(true, false)
             }
-        } else {
-            monetPref?.isVisible = false
+        } catch (e: Exception) {
+            // Log or show a toast if you want to debug permission issues
+        }
+    }
+
+    private fun setupHookPreferences() {
+        val hookTargetAppPref = findPreference<Preference>("pref_hook_target_app")
+        val customHookClassPref = findPreference<EditTextPreference>("pref_hook_custom_class")
+
+        // When a hook preference changes, we must immediately ensure the file permissions are correct.
+        val listener = Preference.OnPreferenceChangeListener { _, _ ->
+            // The value is saved automatically. We just need to trigger the permission change.
+            // Post it to the message queue to run after the preference has been saved.
+            view?.post { setPreferencesReadable() }
+            true // Allow the value to be saved
         }
 
-        // 2. Language Preference
-        languagePref?.setOnPreferenceChangeListener { _, _ ->
-            // Use post to delay, ensuring the preference value is saved before recreation
+        hookTargetAppPref?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+            showTargetAppSelectionDialog()
+            true
+        }
+        customHookClassPref?.onPreferenceChangeListener = listener
+
+        findPreference<Preference>("pref_start_hook_debug")?.setOnPreferenceClickListener {
+            startActivity(Intent(requireContext(), HookDebugLogActivity::class.java))
+            true
+        }
+
+        findPreference<Preference>("pref_force_stop_target_app")?.setOnPreferenceClickListener {
+            forceStopTargetApp()
+            true
+        }
+        updateHookSummaries()
+    }
+
+    private fun showTargetAppSelectionDialog() {
+        val items = arrayOf(getString(R.string.select_from_list), getString(R.string.enter_manually))
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.select_input_method)
+            .setItems(items) { dialog, which ->
+                when (which) {
+                    0 -> {
+                        val intent = Intent(requireContext(), AppListActivity::class.java)
+                        appSelectionLauncher.launch(intent)
+                    }
+                    1 -> showManualEntryDialog()
+                }
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun showManualEntryDialog() {
+        lifecycleScope.launch {
+            val packageNames = withContext(Dispatchers.IO) {
+                val pm = requireContext().packageManager
+                pm.getInstalledApplications(0).map { it.packageName }.sorted()
+            }
+
+            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_autocomplete_edittext, null)
+            val autoCompleteTextView = dialogView.findViewById<AutoCompleteTextView>(R.id.autoCompleteTextView)
+            val adapter = FuzzySearchAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, packageNames)
+            autoCompleteTextView.setAdapter(adapter)
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.pref_hook_target_app_title)
+                .setView(dialogView)
+                .setPositiveButton(R.string.save) { dialog, _ ->
+                    val packageName = autoCompleteTextView.text.toString()
+                    if (packageName.isNotBlank()) {
+                        saveTargetAppPackage(packageName)
+                    }
+                    dialog.dismiss()
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        }
+    }
+
+    private fun saveTargetAppPackage(packageName: String) {
+        findPreference<Preference>("pref_hook_target_app")?.sharedPreferences?.edit {
+            putString("pref_hook_target_app", packageName)
+            // Use commit() to write synchronously and then immediately set permissions.
+            commit()
+        }
+        setPreferencesReadable()
+        updateHookSummaries()
+    }
+    
+    // ... (The rest of the SettingsFragment file remains the same) ...
+
+    private fun updateHookSummaries() {
+        val hookTargetAppPref = findPreference<Preference>("pref_hook_target_app")
+        val customHookClassPref = findPreference<EditTextPreference>("pref_hook_custom_class")
+
+        val targetAppSummary = getString(R.string.pref_hook_target_app_summary)
+        val currentTargetApp = hookTargetAppPref?.sharedPreferences?.getString("pref_hook_target_app", "")
+        hookTargetAppPref?.summary = if (currentTargetApp.isNullOrEmpty()) {
+            targetAppSummary + "\n" + getString(R.string.current_value_is, getString(R.string.not_set))
+        } else {
+            targetAppSummary + "\n" + getString(R.string.current_value_is, currentTargetApp)
+        }
+
+        customHookClassPref?.summaryProvider = Preference.SummaryProvider<EditTextPreference> { pref ->
+            val baseSummary = getString(R.string.pref_hook_custom_class_summary)
+            val value = pref.text
+            if (value.isNullOrEmpty()) {
+                baseSummary + "\n" + getString(R.string.current_value_is, getString(R.string.not_set))
+            } else {
+                baseSummary + "\n" + getString(R.string.current_value_is, value)
+            }
+        }
+    }
+
+    private fun forceStopTargetApp() {
+        val targetPackage = findPreference<Preference>("pref_hook_target_app")?.sharedPreferences?.getString("pref_hook_target_app", "")
+        if (targetPackage.isNullOrEmpty()) {
+            Toast.makeText(requireContext(), R.string.force_stop_no_target, Toast.LENGTH_SHORT).show()
+            return
+        }
+        try {
+            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "am force-stop $targetPackage"))
+            process.waitFor()
+            Toast.makeText(requireContext(), getString(R.string.force_stop_success, targetPackage), Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), getString(R.string.force_stop_failed, targetPackage), Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun setupOtherPreferences() {
+        findPreference<SwitchPreferenceCompat>("pref_monet_theme")?.let { monetPref ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                monetPref.setOnPreferenceChangeListener { _, _ ->
+                    view?.post { triggerRecreate() }
+                    true
+                }
+            } else {
+                monetPref.isVisible = false
+            }
+        }
+        findPreference<Preference>("pref_language")?.setOnPreferenceChangeListener { _, _ ->
             view?.post { triggerRecreate() }
             true
         }
-
-        // 3. SMS Limit Preference
-        smsLimitPref?.summaryProvider =
-            Preference.SummaryProvider<EditTextPreference> { preference ->
+        findPreference<EditTextPreference>("pref_sms_limit")?.let {
+            it.summaryProvider = Preference.SummaryProvider<EditTextPreference> { preference ->
                 val text = preference.text
                 val value = text?.toIntOrNull() ?: -1
-                if (value <= 0) {
-                    getString(R.string.pref_sms_limit_summary_unlimited)
-                } else {
-                    getString(R.string.pref_sms_limit_summary_format, text)
-                }
+                if (value <= 0) getString(R.string.pref_sms_limit_summary_unlimited)
+                else getString(R.string.pref_sms_limit_summary_format, text)
             }
-        smsLimitPref?.setOnBindEditTextListener { editText ->
-            editText.hint = getString(R.string.pref_sms_limit_dialog_hint)
         }
-
-        // 4. Max Retry Attempts Preference
-        retryAttemptsPref?.summaryProvider =
-            Preference.SummaryProvider<EditTextPreference> { preference ->
-                val text = preference.text
-                // Use default value if text is invalid
-                val value = text?.toIntOrNull() ?: 5
-                getString(R.string.pref_max_retry_attempts_summary, value.toString())
-            }
-        retryAttemptsPref?.dialogTitle = getString(R.string.pref_max_retry_attempts_dialog_title)
-
-        // 5. Click listeners
-        viewLogsPref?.setOnPreferenceClickListener {
+        findPreference<Preference>("pref_view_logs")?.setOnPreferenceClickListener {
             startActivity(Intent(requireContext(), LogActivity::class.java))
             true
         }
-        clearSmsPref?.setOnPreferenceClickListener {
+        findPreference<Preference>("pref_clear_sms")?.setOnPreferenceClickListener {
             showClearSmsConfirmationDialog()
             true
         }
-        batteryPref?.setOnPreferenceClickListener {
+        findPreference<Preference>("pref_ignore_battery_optimizations")?.setOnPreferenceClickListener {
             openBatterySettings()
             true
         }
-        exportPref?.setOnPreferenceClickListener {
+        findPreference<Preference>("pref_export_data")?.setOnPreferenceClickListener {
             val simpleDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
             val timestamp = simpleDateFormat.format(Date())
             val fileName = "smsforwarder_backup_$timestamp.json"
             exportLauncher.launch(fileName)
             true
         }
-        importPref?.setOnPreferenceClickListener {
+        findPreference<Preference>("pref_import_data")?.setOnPreferenceClickListener {
             importLauncher.launch(arrayOf("application/json"))
             true
         }
     }
 
+    private fun triggerRecreate() {
+        lifecycleScope.launch { RecreateHandler.triggerRecreate() }
+    }
+    
     private fun showImportConfirmationDialog(uri: Uri) {
-        val strategies = arrayOf(
-            getString(R.string.import_strategy_merge),
-            getString(R.string.import_strategy_replace)
-        )
+        val strategies = arrayOf(getString(R.string.import_strategy_merge), getString(R.string.import_strategy_replace))
         var selectedStrategy = ImportStrategy.MERGE
-
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.import_dialog_title)
-            // FIXED: Removed .setMessage() as it conflicts with setSingleChoiceItems()
             .setSingleChoiceItems(strategies, 0) { _, which ->
                 selectedStrategy = if (which == 0) ImportStrategy.MERGE else ImportStrategy.REPLACE
             }
             .setNegativeButton(R.string.cancel, null)
-            .setPositiveButton(R.string.import_action) { _, _ ->
-                importDataFromFile(uri, selectedStrategy)
-            }
+            .setPositiveButton(R.string.import_action) { _, _ -> importDataFromFile(uri, selectedStrategy) }
             .show()
     }
 
@@ -173,39 +307,21 @@ class SettingsFragment : PreferenceFragmentCompat() {
                     }
                 }
                 val success = viewModel.importData(stringBuilder.toString(), strategy)
-                if (success) {
-                    Toast.makeText(requireContext(), R.string.import_success, Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(requireContext(), R.string.import_failed, Toast.LENGTH_SHORT).show()
-                }
+                if (success) Toast.makeText(requireContext(), R.string.import_success, Toast.LENGTH_SHORT).show()
+                else Toast.makeText(requireContext(), R.string.import_failed, Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                val errorMessage = getString(R.string.import_failed) + ": " + e.localizedMessage
-                Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "${getString(R.string.import_failed)}: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
             }
-        }
-    }
-
-    private fun triggerRecreate() {
-        lifecycleScope.launch {
-            RecreateHandler.triggerRecreate()
         }
     }
 
     private fun openBatterySettings() {
         try {
-            val intent = Intent().apply {
-                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                data = "package:${requireContext().packageName}".toUri()
-            }
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:${requireContext().packageName}".toUri())
             startActivity(intent)
-            Toast.makeText(
-                requireContext(),
-                R.string.battery_settings_toast,
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(requireContext(), R.string.battery_settings_toast, Toast.LENGTH_LONG).show()
         } catch (_: Exception) {
-            Toast.makeText(requireContext(), R.string.cannot_open_settings_toast, Toast.LENGTH_SHORT)
-                .show()
+            Toast.makeText(requireContext(), R.string.cannot_open_settings_toast, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -216,65 +332,52 @@ class SettingsFragment : PreferenceFragmentCompat() {
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.clear) { _, _ ->
                 viewModel.clearAllSms()
-                Toast.makeText(requireContext(), R.string.all_messages_cleared, Toast.LENGTH_SHORT)
-                    .show()
+                Toast.makeText(requireContext(), R.string.all_messages_cleared, Toast.LENGTH_SHORT).show()
             }
             .show()
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
-        if (preference is ListPreference) {
-            showListPreference(preference)
-        } else if (preference is EditTextPreference) {
+        if (preference is EditTextPreference) {
             showEditTextPreference(preference)
-        } else {
+        } else if (preference is ListPreference) {
+            showListPreference(preference)
+        }
+        else {
             super.onDisplayPreferenceDialog(preference)
         }
     }
-
-
+    
     private fun showListPreference(preference: ListPreference) {
-        val selectionIndex = listOf(*preference.entryValues)
-            .indexOf(preference.value)
-        val builder = MaterialAlertDialogBuilder(requireContext())
-        builder.setTitle(preference.title)
-        builder.setNegativeButton(android.R.string.cancel, null)
-        builder.setSingleChoiceItems(
-            preference.entries,
-            selectionIndex
-        ) { dialog: DialogInterface?, index: Int ->
-            val newValue = preference.entryValues[index].toString()
-            if (preference.callChangeListener(newValue)) {
-                preference.setValue(newValue)
+        val selectionIndex = preference.findIndexOfValue(preference.value)
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(preference.title)
+            .setSingleChoiceItems(preference.entries, selectionIndex) { dialog, which ->
+                val newValue = preference.entryValues[which].toString()
+                if (preference.callChangeListener(newValue)) {
+                    preference.value = newValue
+                }
+                dialog.dismiss()
             }
-            dialog!!.dismiss()
-        }
-        builder.show()
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
-    fun showEditTextPreference(preference: EditTextPreference) {
+    private fun showEditTextPreference(preference: EditTextPreference) {
         val dialogView = View.inflate(requireContext(), R.layout.dialog_edit_text, null)
-        val textInputLayout = dialogView.findViewById<TextInputLayout>(R.id.textInputLayout)
         val input = dialogView.findViewById<TextInputEditText?>(R.id.textInput)
-
-        if (preference.key == "pref_sms_limit") {
-            textInputLayout.hint = getString(R.string.pref_sms_limit_dialog_hint)
-        }
         input?.setText(preference.text)
-
         val builder = MaterialAlertDialogBuilder(requireContext())
         builder.setTitle(preference.title)
-        builder.setIcon(R.drawable.ic_edit)
-        builder.setNegativeButton(android.R.string.cancel, null)
-        builder.setPositiveButton(android.R.string.ok, { dialog, i ->
-            val newValue = input?.getText().toString()
+        builder.setView(dialogView)
+        builder.setPositiveButton(android.R.string.ok) { dialog, _ ->
+            val newValue = input?.text.toString()
             if (preference.callChangeListener(newValue)) {
-                preference.setText(newValue)
+                preference.text = newValue
             }
             dialog.dismiss()
-        })
-        builder.setView(dialogView)
-        val dialog: Dialog = builder.create()
-        dialog.show()
+        }
+        builder.setNegativeButton(android.R.string.cancel, null)
+        builder.show()
     }
 }

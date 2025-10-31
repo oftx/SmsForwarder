@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_force_stop"
+        android:title="@string/pref_force_stop_target_app_title"
+        app:actionLayout="@layout/action_force_stop_layout"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_copy_all"
+        android:icon="@drawable/ic_copy"
+        android:title="@string/copy_all"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_clear_logs"
+        android:icon="@drawable/ic_delete"
+        android:title="@string/clear"
+        app:showAsAction="ifRoom" />
+</menu>

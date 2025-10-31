@@ -100,9 +100,33 @@
     <string name="import_strategy_replace">Clear and Replace</string>
     <string name="import_action">Import</string>
 
+    <!-- Hook Settings Strings -->
+    <string name="settings_category_hook">Hook Settings (Advanced)</string>
+    <string name="pref_start_hook_debug_title">Start Hook Analysis</string>
+    <string name="pref_start_hook_debug_summary">Generates live debug logs to help find the correct hook point.</string>
+    <string name="pref_hook_target_app_title">Target App Package</string>
+    <string name="pref_hook_target_app_summary">Tap to select the app to hook. Leave empty to use defaults.</string>
+    <string name="pref_hook_custom_class_title">Custom Hook Class Name</string>
+    <string name="pref_hook_custom_class_summary">The class containing onReceive. Find this from the analysis log.</string>
+    <string name="hook_debug_log_activity_title">Hook Analysis Log</string>
+    <string name="hook_debug_log_instructions">Logs from the Xposed module will appear here live. Open your SMS app to trigger the logs. The text is selectable for copying.</string>
+    <string name="current_value_is">Current: %s</string>
+    <string name="not_set">Not set</string>
+    <string name="app_list_activity_title">Select Target App</string>
+    <string name="pref_force_stop_target_app_title">Force Stop Target App</string>
+    <string name="pref_force_stop_target_app_summary">Restart the target app to apply new hook settings. Requires Root.</string>
+    <string name="force_stop_success">Successfully force-stopped %s</string>
+    <string name="force_stop_failed">Failed to force-stop %s. Is root granted?</string>
+    <string name="force_stop_no_target">No target app is set.</string>
+    <string name="search_apps">Search apps…</string>
+    <string name="select_input_method">Select Input Method</string>
+    <string name="select_from_list">Select from List</string>
+    <string name="enter_manually">Enter Manually</string>
+    <string name="enter_package_name_hint">Enter package name…</string>
+
     <!-- Worker -->
     <string name="worker_new_sms_title">New message from: %1$s</string>
-    n    <!-- SMS Detail Dialog -->
+    <!-- SMS Detail Dialog -->
     <string name="sms_details_title">SMS Details</string>
     <string name="detail_sender">Sender:</string>
     <string name="detail_received_at">Received at:</string>
@@ -125,7 +149,6 @@
     <string name="status_summary_forwarding_to">Forwarding to:\u0020</string>
     <string name="status_summary_retrying">Retrying:\u0020</string>
 
-    <!-- START: New Strings for Internationalization -->
     <!-- First Launch Prompt -->
     <string name="first_launch_dialog_title">Important Setting Reminder</string>
     <string name="first_launch_dialog_message">To ensure the SMS forwarding feature works reliably when the screen is locked or the phone is idle for a long time, please set the app\'s battery usage to \"Unrestricted\".</string>
@@ -135,5 +158,4 @@
     <!-- Toasts -->
     <string name="battery_settings_toast">Please go to the "Battery" or "Power Management" section to configure.</string>
     <string name="cannot_open_settings_toast">Could not open automatically, please go to system settings manually.</string>
-    <!-- END: New Strings for Internationalization -->
 </resources>

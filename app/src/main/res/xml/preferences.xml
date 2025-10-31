@@ -69,4 +69,24 @@
             app:summary="@string/pref_import_data_summary" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/settings_category_hook">
+        <Preference
+            app:key="pref_start_hook_debug"
+            app:title="@string/pref_start_hook_debug_title"
+            app:summary="@string/pref_start_hook_debug_summary" />
+        <!-- This is now a regular Preference that launches an Activity -->
+        <Preference
+            app:key="pref_hook_target_app"
+            app:title="@string/pref_hook_target_app_title"
+            app:summary="@string/pref_hook_target_app_summary" />
+        <EditTextPreference
+            app:key="pref_hook_custom_class"
+            app:title="@string/pref_hook_custom_class_title"
+            app:dialogTitle="@string/pref_hook_custom_class_title" />
+        <Preference
+            app:key="pref_force_stop_target_app"
+            app:title="@string/pref_force_stop_target_app_title"
+            app:summary="@string/pref_force_stop_target_app_summary" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

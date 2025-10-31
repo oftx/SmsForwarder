@@ -3,115 +3,168 @@ package github.oftx.smsforwarder
 import android.app.Application
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.provider.Telephony
+import android.util.Xml
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import org.xmlpull.v1.XmlPullParser
+import java.io.File
 
 class SmsHook : IXposedHookLoadPackage {
 
     companion object {
         private const val MODULE_PACKAGE_NAME = "github.oftx.smsforwarder"
+        private const val ACTION_DEBUG_LOG = "github.oftx.smsforwarder.ACTION_DEBUG_LOG"
 
-        private val TARGET_PACKAGES = setOf(
-            "com.android.mms",
-            "com.google.android.apps.messaging"
+        private val DEFAULT_TARGET_PACKAGES = setOf("com.android.mms", "com.google.android.apps.messaging")
+        private val DEFAULT_RECEIVER_CLASSES = setOf(
+            "com.google.android.apps.messaging.shared.receiver.SmsDeliverReceiver",
+            "com.google.android.apps.messaging.sms.SmsReceiver",
+            "com.android.mms.transaction.SmsReceiver"
         )
     }
 
-    private var isHooked = false
+    data class HookConfig(val targetApp: String, val customClass: String)
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
-        if (lpparam.packageName in TARGET_PACKAGES && !isHooked) {
-            XposedBridge.log("SmsFwd: Target package found: ${lpparam.packageName}. Preparing to hook.")
-            hookSmsReceiverOnReceive(lpparam)
-            isHooked = true
+        if (lpparam.appInfo == null || (lpparam.appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0) {
+            return
         }
+
+        XposedHelpers.findAndHookMethod(Application::class.java, "onCreate", object : XC_MethodHook() {
+            override fun afterHookedMethod(param: MethodHookParam) {
+                val hookedAppContext = param.thisObject as Context
+                onApplicationCreate(hookedAppContext, lpparam)
+            }
+        })
     }
 
-    private fun hookSmsReceiverOnReceive(lpparam: LoadPackageParam) {
-        // A set of potential SMS receiver classes, with our confirmed target at the top.
-        val receiverClasses = setOf(
-            "com.google.android.apps.messaging.shared.receiver.SmsDeliverReceiver",
-            "com.google.android.apps.messaging.sms.SmsReceiver", // Fallback for other versions
-            "com.android.mms.transaction.SmsReceiver"            // Fallback for AOSP
-        )
+    private fun getHookConfig(): HookConfig {
+        var targetApp = ""
+        var customClass = ""
+        val prefsFile = File("/data/data/$MODULE_PACKAGE_NAME/shared_prefs/${MODULE_PACKAGE_NAME}_preferences.xml")
 
-        for (className in receiverClasses) {
-            try {
-                val receiverClass = XposedHelpers.findClass(className, lpparam.classLoader)
-                
-                // Based on debugging, the onReceive method is in the superclass.
-                // We explicitly target the superclass for the hook.
-                val hookTargetClass = receiverClass.superclass
-                if (hookTargetClass == null || hookTargetClass == Object::class.java) {
-                     continue // Skip if there's no valid superclass
-                }
+        if (!prefsFile.exists() || !prefsFile.canRead()) {
+            XposedBridge.log("SmsFwd: Preference file does not exist or cannot be read at: ${prefsFile.path}")
+            return HookConfig(targetApp, customClass)
+        }
 
-                XposedBridge.log("SmsFwd: Attempting to hook onReceive in '${hookTargetClass.name}' (superclass of '$className').")
+        try {
+            prefsFile.inputStream().use { stream ->
+                val parser = Xml.newPullParser()
+                parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
+                parser.setInput(stream, null)
 
-                XposedHelpers.findAndHookMethod(
-                    hookTargetClass, // Hook the parent class directly
-                    "onReceive",
-                    Context::class.java,
-                    Intent::class.java,
-                    object : XC_MethodHook() {
-                        override fun beforeHookedMethod(param: MethodHookParam) {
-                            val intent = param.args[1] as? Intent ?: return
-                            val action = intent.action
-
-                            // Check for the two primary SMS actions. Our debugging confirmed SMS_DELIVER_ACTION is used.
-                            // We include SMS_RECEIVED_ACTION for broader compatibility.
-                            if (action != Telephony.Sms.Intents.SMS_DELIVER_ACTION &&
-                                action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
-                                return
-                            }
-
-                            val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
-                            if (messages.isNullOrEmpty()) {
-                                return
-                            }
-
-                            val sender = messages[0].originatingAddress ?: return
-                            val content = messages.joinToString("") { it.messageBody ?: "" }
-                            
-                            XposedBridge.log("SmsFwd: SUCCESS! HOOK TRIGGERED. Full SMS from: $sender. Sending broadcast...")
-                            
-                            // It works! Now we send the data to our app.
-                            sendSmsBroadcast(lpparam.classLoader, sender, content)
+                var eventType = parser.eventType
+                while (eventType != XmlPullParser.END_DOCUMENT) {
+                    if (eventType == XmlPullParser.START_TAG && parser.name == "string") {
+                        val key = parser.getAttributeValue(null, "name")
+                        if ("pref_hook_target_app" == key) {
+                            targetApp = parser.nextText()
+                        } else if ("pref_hook_custom_class" == key) {
+                            customClass = parser.nextText()
                         }
                     }
-                )
-                XposedBridge.log("SmsFwd: SUCCESS: Hooked ${hookTargetClass.name}.onReceive.")
-                break // Hook was successful, no need to try other classes.
-            } catch (e: XposedHelpers.ClassNotFoundError) {
-                // This is normal, just log that the class wasn't found.
-                XposedBridge.log("SmsFwd: Class $className not found in ${lpparam.packageName}, skipping.")
-            } catch (e: Throwable) {
-                XposedBridge.log("SmsFwd: FATAL: Failed to hook a method in the hierarchy of ${className}: ${e.message}")
+                    eventType = parser.next()
+                }
             }
+        } catch (e: Exception) {
+            XposedBridge.log("SmsFwd: Error parsing preference file: ${e.message}")
+        }
+        XposedBridge.log("SmsFwd: Settings loaded from file: targetApp='$targetApp', customClass='$customClass'")
+        return HookConfig(targetApp, customClass)
+    }
+
+
+    private fun onApplicationCreate(hookedAppContext: Context, lpparam: LoadPackageParam) {
+        val config = getHookConfig()
+
+        val isTarget = if (config.targetApp.isNotBlank()) {
+            lpparam.packageName == config.targetApp
+        } else {
+            lpparam.packageName in DEFAULT_TARGET_PACKAGES
+        }
+
+        if (!isTarget) {
+            return
+        }
+
+        XposedBridge.log("SmsFwd: Target package found: ${lpparam.packageName}. Initializing hooks...")
+        performFunctionalHook(lpparam, config.customClass)
+    }
+
+    private fun performFunctionalHook(lpparam: LoadPackageParam, customHookClass: String) {
+        val classesToTry = if (customHookClass.isNotBlank()) {
+            XposedBridge.log("SmsFwd: Using custom hook class: $customHookClass")
+            setOf(customHookClass)
+        } else {
+            XposedBridge.log("SmsFwd: No custom class set. Trying default classes...")
+            DEFAULT_RECEIVER_CLASSES
+        }
+
+        var success = false
+        for (className in classesToTry) {
+            if (tryHookClass(className, lpparam.classLoader)) {
+                success = true
+                break
+            }
+        }
+
+        if (!success) {
+            XposedBridge.log("SmsFwd: WARNING: Could not find any suitable hook point.")
         }
     }
 
-    private fun sendSmsBroadcast(classLoader: ClassLoader, sender: String, content: String) {
+    private fun tryHookClass(className: String, classLoader: ClassLoader): Boolean {
+        try {
+            val targetClass = XposedHelpers.findClass(className, classLoader)
+            listOfNotNull(targetClass, targetClass.superclass).distinct().forEach { hookableClass ->
+                if (hookableClass == Object::class.java) return@forEach
+                try {
+                    XposedBridge.log("SmsFwd: Attempting to hook onReceive in '${hookableClass.name}'")
+                    XposedHelpers.findAndHookMethod(hookableClass, "onReceive", Context::class.java, Intent::class.java, smsReceiverHook)
+                    XposedBridge.log("SmsFwd: SUCCESS: Hooked ${hookableClass.name}.onReceive.")
+                    return true
+                } catch (e: NoSuchMethodError) {
+                    // Method not found, continue loop
+                }
+            }
+        } catch (e: XposedHelpers.ClassNotFoundError) {
+            XposedBridge.log("SmsFwd: Class $className not found.")
+        } catch (e: Throwable) {
+            XposedBridge.log("SmsFwd: FATAL: Failed to hook hierarchy for $className: ${e.message}")
+        }
+        return false
+    }
+
+    private val smsReceiverHook = object : XC_MethodHook() {
+        override fun beforeHookedMethod(param: MethodHookParam) {
+            val intent = param.args[1] as? Intent ?: return
+            if (intent.action != Telephony.Sms.Intents.SMS_DELIVER_ACTION && intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
+            val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
+            val sender = messages.firstOrNull()?.originatingAddress ?: return
+            val content = messages.joinToString("") { it.messageBody ?: "" }
+            XposedBridge.log("SmsFwd: Intercepted SMS from: $sender. Sending broadcast...")
+            sendSmsBroadcast(param.thisObject.javaClass.classLoader, sender, content)
+        }
+    }
+
+    private fun sendSmsBroadcast(classLoader: ClassLoader?, sender: String, content: String) {
         try {
             val activityThreadClass = XposedHelpers.findClass("android.app.ActivityThread", classLoader)
             val application = XposedHelpers.callStaticMethod(activityThreadClass, "currentApplication") as Application
             val context = application.applicationContext
-
             val intent = Intent(SmsReceiver.ACTION_SMS_RECEIVED).apply {
-                putExtra("sender", sender)
-                putExtra("content", content)
-                setPackage(MODULE_PACKAGE_NAME)
+                putExtra("sender", sender); putExtra("content", content); setPackage(MODULE_PACKAGE_NAME)
                 addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
             }
             context.sendBroadcast(intent)
-            XposedBridge.log("SmsFwd: Broadcast sent successfully.")
         } catch (t: Throwable) {
-            XposedBridge.log("SmsFwd-FATAL: Failed to send broadcast: ${t.message}")
-            XposedBridge.log(t)
+            XposedBridge.log("SmsFwd: FATAL: Failed to send broadcast: ${t.message}")
         }
     }
 }
