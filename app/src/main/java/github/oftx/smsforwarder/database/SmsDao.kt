@@ -20,7 +20,7 @@ interface SmsDao {
     @Query("SELECT * FROM sms_logs WHERE id = :smsId")
     suspend fun getSmsById(smsId: Long): SmsEntity?
     
-    // 新增：为详情弹窗提供 Flow 版本的查询
+    // 为详情弹窗提供 Flow 版本的查询
     @Query("SELECT * FROM sms_logs WHERE id = :smsId")
     fun getSmsByIdAsFlow(smsId: Long): Flow<SmsEntity?>
 
@@ -29,4 +29,8 @@ interface SmsDao {
 
     @Query("DELETE FROM sms_logs WHERE id NOT IN (SELECT id FROM sms_logs ORDER BY timestamp DESC LIMIT :limit)")
     suspend fun enforceLimit(limit: Int)
+    
+    // <<< FIX: 添加这个缺失的方法 >>>
+    @Query("SELECT COUNT(id) FROM sms_logs")
+    suspend fun getCount(): Int
 }

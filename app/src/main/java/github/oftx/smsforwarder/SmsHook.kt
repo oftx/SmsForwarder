@@ -19,6 +19,7 @@ class SmsHook : IXposedHookLoadPackage {
             "com.google.android.apps.messaging"
         )
 
+        // Debounce logic to handle multiple PDU creations for the same message part
         private const val DEBOUNCE_WINDOW_MS = 2000
         @Volatile private var lastPduTimestamp: Long = 0
         private val recentPduSignatures = mutableSetOf<String>()
@@ -44,19 +45,26 @@ class SmsHook : IXposedHookLoadPackage {
 
             XposedBridge.hookMethod(createFromPduMethod, object : XC_MethodHook() {
                 override fun beforeHookedMethod(param: MethodHookParam) {
+                    // This debounce logic is crucial because some systems call createFromPdu multiple
+                    // times for the same message segment. This ensures we only process it once.
                     synchronized(lock) {
                         val pdu = param.args[0] as ByteArray
-                        val pduSignature = pdu.contentToString()
+                        val pduSignature = pdu.contentToString() // Create a signature from PDU content
                         val now = System.currentTimeMillis()
 
+                        // Clear old signatures if window has passed
                         if (now - lastPduTimestamp > DEBOUNCE_WINDOW_MS) {
                             recentPduSignatures.clear()
                         }
+                        
+                        // If we've seen this exact PDU recently, suppress it.
                         if (recentPduSignatures.contains(pduSignature)) {
-                            XposedBridge.log("SmsFwd: Duplicate PDU detected (signature match). Suppressing.")
-                            param.result = null
+                            XposedBridge.log("SmsFwd: Duplicate PDU detected within debounce window. Suppressing.")
+                            param.result = null // Prevent the original method from running again
                             return
                         }
+
+                        // A new, unique PDU segment. Record it.
                         recentPduSignatures.add(pduSignature)
                         lastPduTimestamp = now
                         XposedBridge.log("SmsFwd: New unique PDU detected. Allowing method to proceed.")
@@ -93,10 +101,7 @@ class SmsHook : IXposedHookLoadPackage {
                 putExtra("sender", sender)
                 putExtra("content", content)
                 setPackage(MODULE_PACKAGE_NAME)
-                // --- START OF FINAL FIX ---
-                // This flag is CRITICAL to wake up the app from a "force-stopped" state.
                 addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES)
-                // --- END OF FINAL FIX ---
             }
             context.sendBroadcast(intent)
             XposedBridge.log("SmsFwd: Broadcast sent successfully.")
