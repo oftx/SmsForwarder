@@ -99,6 +99,9 @@
     <string name="import_strategy_merge">合併（新增資料）</string>
     <string name="import_strategy_replace">清除並取代</string>
     <string name="import_action">匯入</string>
+    <string name="import_select_content">選擇要還原的內容：</string>
+    <string name="import_checkbox_rules">轉發規則</string>
+    <string name="import_checkbox_messages">訊息記錄</string>
 
     <!-- Worker -->
     <string name="worker_new_sms_title">新簡訊來自: %1$s</string>

@@ -99,6 +99,9 @@
     <string name="import_strategy_merge">合并（添加新数据）</string>
     <string name="import_strategy_replace">清空并替换</string>
     <string name="import_action">导入</string>
+    <string name="import_select_content">选择要恢复的内容：</string>
+    <string name="import_checkbox_rules">转发规则</string>
+    <string name="import_checkbox_messages">短信记录</string>
 
     <!-- Worker -->
     <string name="worker_new_sms_title">新短信来自: %1$s</string>
