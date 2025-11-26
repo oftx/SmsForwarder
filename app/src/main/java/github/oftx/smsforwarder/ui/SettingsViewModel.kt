@@ -42,22 +42,36 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         Json.encodeToString(backupData)
     }
 
-    suspend fun importData(jsonData: String, strategy: ImportStrategy): Boolean = withContext(Dispatchers.IO) {
+    suspend fun importData(
+        jsonData: String,
+        strategy: ImportStrategy,
+        importRules: Boolean,
+        importMessages: Boolean
+    ): Boolean = withContext(Dispatchers.IO) {
         try {
             val backupData = Json.decodeFromString<BackupData>(jsonData)
 
             if (strategy == ImportStrategy.REPLACE) {
-                smsDao.deleteAll()
-                ruleDao.deleteAll()
-                AppLogger.suspendLog(getApplication(), "[Settings] Cleared existing data for import.")
+                if (importMessages) {
+                    smsDao.deleteAll()
+                    AppLogger.suspendLog(getApplication(), "[Settings] Cleared existing SMS for import.")
+                }
+                if (importRules) {
+                    ruleDao.deleteAll()
+                    AppLogger.suspendLog(getApplication(), "[Settings] Cleared existing Rules for import.")
+                }
             }
 
             // Insert all items from backup as new entries (with new auto-generated IDs)
             // This works for both REPLACE (after clearing) and MERGE (adding to existing)
-            backupData.rules.forEach { ruleDao.insert(it.copy(id = 0)) }
-            backupData.messages.forEach { smsDao.insert(it.copy(id = 0)) }
+            if (importRules) {
+                backupData.rules.forEach { ruleDao.insert(it.copy(id = 0)) }
+            }
+            if (importMessages) {
+                backupData.messages.forEach { smsDao.insert(it.copy(id = 0)) }
+            }
 
-            AppLogger.suspendLog(getApplication(), "[Settings] Data imported successfully with strategy: $strategy.")
+            AppLogger.suspendLog(getApplication(), "[Settings] Data imported successfully with strategy: $strategy. Rules: $importRules, Messages: $importMessages")
             true
         } catch (e: Exception) {
             AppLogger.suspendLog(getApplication(), "[Settings] Data import failed: ${e.message}")

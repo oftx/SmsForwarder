@@ -140,26 +140,40 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun showImportConfirmationDialog(uri: Uri) {
-        val strategies = arrayOf(
-            getString(R.string.import_strategy_merge),
-            getString(R.string.import_strategy_replace)
-        )
-        var selectedStrategy = ImportStrategy.MERGE
+        val dialogView = View.inflate(requireContext(), R.layout.dialog_import_options, null)
+        val checkboxRules = dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_rules)
+        val checkboxMessages = dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.checkbox_messages)
+        val radioGroup = dialogView.findViewById<android.widget.RadioGroup>(R.id.radio_group_strategy)
 
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.import_dialog_title)
-            // FIXED: Removed .setMessage() as it conflicts with setSingleChoiceItems()
-            .setSingleChoiceItems(strategies, 0) { _, which ->
-                selectedStrategy = if (which == 0) ImportStrategy.MERGE else ImportStrategy.REPLACE
-            }
+            .setView(dialogView)
             .setNegativeButton(R.string.cancel, null)
             .setPositiveButton(R.string.import_action) { _, _ ->
-                importDataFromFile(uri, selectedStrategy)
+                val strategy = if (radioGroup.checkedRadioButtonId == R.id.radio_replace) {
+                    ImportStrategy.REPLACE
+                } else {
+                    ImportStrategy.MERGE
+                }
+                val importRules = checkboxRules.isChecked
+                val importMessages = checkboxMessages.isChecked
+
+                if (!importRules && !importMessages) {
+                    Toast.makeText(requireContext(), "Please select at least one item to restore", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                importDataFromFile(uri, strategy, importRules, importMessages)
             }
             .show()
     }
 
-    private fun importDataFromFile(uri: Uri, strategy: ImportStrategy) {
+    private fun importDataFromFile(
+        uri: Uri,
+        strategy: ImportStrategy,
+        importRules: Boolean,
+        importMessages: Boolean
+    ) {
         lifecycleScope.launch {
             try {
                 val stringBuilder = StringBuilder()
@@ -172,7 +186,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
                         }
                     }
                 }
-                val success = viewModel.importData(stringBuilder.toString(), strategy)
+                val success = viewModel.importData(stringBuilder.toString(), strategy, importRules, importMessages)
                 if (success) {
                     Toast.makeText(requireContext(), R.string.import_success, Toast.LENGTH_SHORT).show()
                 } else {

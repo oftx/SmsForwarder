@@ -99,6 +99,9 @@
     <string name="import_strategy_merge">Merge (Add new data)</string>
     <string name="import_strategy_replace">Clear and Replace</string>
     <string name="import_action">Import</string>
+    <string name="import_select_content">Select Content to Restore:</string>
+    <string name="import_checkbox_rules">Forwarding Rules</string>
+    <string name="import_checkbox_messages">SMS Messages</string>
 
     <!-- Worker -->
     <string name="worker_new_sms_title">New message from: %1$s</string>

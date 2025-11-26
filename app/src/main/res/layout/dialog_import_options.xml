@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/import_select_content"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:layout_marginBottom="8dp" />
+
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/checkbox_rules"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:text="@string/import_checkbox_rules" />
+
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/checkbox_messages"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:text="@string/import_checkbox_messages" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:text="@string/import_dialog_message"
+        android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+    <RadioGroup
+        android:id="@+id/radio_group_strategy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/radio_merge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/import_strategy_merge" />
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/radio_replace"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/import_strategy_replace" />
+    </RadioGroup>
+
+</LinearLayout>
