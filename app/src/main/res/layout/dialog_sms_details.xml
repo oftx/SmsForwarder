@@ -6,9 +6,10 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:paddingTop="24dp"
-    android:paddingBottom="8dp"
     android:paddingStart="24dp"
-    android:paddingEnd="24dp">
+    android:paddingEnd="24dp"
+    android:fitsSystemWindows="false"
+    android:clipToPadding="false">
 
     <TextView
         android:id="@+id/tv_dialog_title"
@@ -66,6 +67,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:layout_marginTop="16dp"
+        android:layout_marginBottom="24dp"
         android:text="@string/ok" />
 
 </LinearLayout>
