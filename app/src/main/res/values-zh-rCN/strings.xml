@@ -107,8 +107,8 @@
     <string name="worker_new_sms_title">新短信来自: %1$s</string>
     n    <!-- SMS Detail Dialog -->
     <string name="sms_details_title">短信详情</string>
-    <string name="detail_sender">发送者:</string>
-    <string name="detail_received_at">接收时间:</string>
+    <string name="detail_sender">发送者: %1$s</string>
+    <string name="detail_received_at">接收时间: %1$s</string>
     <string name="detail_content">短信内容:</string>
     <string name="ok">确定</string>
     <string name="status_label_forwarding_to">转发状态 - %1$s:</string>

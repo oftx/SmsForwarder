@@ -107,17 +107,19 @@ class SmsDetailDialogFragment : BottomSheetDialogFragment() {
         // Configure the window for edge-to-edge
         dialog?.window?.let { window ->
             // Make navigation bar transparent
+            @Suppress("DEPRECATION")
             window.navigationBarColor = android.graphics.Color.TRANSPARENT
             
             // Allow drawing behind system bars
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                window.setDecorFitsSystemWindows(false)
-            } else {
+            androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+            
+            if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) {
+                // For older versions, ensure flags are set correctly if WindowCompat doesn't handle it fully (it usually does for the fitsSystemWindows part, but let's be safe)
                 @Suppress("DEPRECATION")
                 window.decorView.systemUiVisibility = (
-                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 )
             }
         }
@@ -145,9 +147,9 @@ class SmsDetailDialogFragment : BottomSheetDialogFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.uiState.collectLatest { state ->
                 state.sms?.let {
-                    binding.tvDetailSender.text = getString(R.string.detail_sender) + " " + it.sender
+                    binding.tvDetailSender.text = getString(R.string.detail_sender, it.sender)
                     // Pass context to get the user-defined time format
-                    binding.tvDetailTimestamp.text = getString(R.string.detail_received_at) + " " + TimeUtil.getAbsoluteTime(requireContext(), it.timestamp)
+                    binding.tvDetailTimestamp.text = getString(R.string.detail_received_at, TimeUtil.getAbsoluteTime(requireContext(), it.timestamp))
                     binding.tvDetailContent.text = it.content
                 }
                 statusAdapter.submitList(state.jobs)

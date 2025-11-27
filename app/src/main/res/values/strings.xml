@@ -107,8 +107,8 @@
     <string name="worker_new_sms_title">New message from: %1$s</string>
     n    <!-- SMS Detail Dialog -->
     <string name="sms_details_title">SMS Details</string>
-    <string name="detail_sender">Sender:</string>
-    <string name="detail_received_at">Received at:</string>
+    <string name="detail_sender">Sender: %1$s</string>
+    <string name="detail_received_at">Received at: %1$s</string>
     <string name="detail_content">Content:</string>
     <string name="ok">OK</string>
     <string name="status_label_forwarding_to">Forwarding Status for %1$s:</string>
