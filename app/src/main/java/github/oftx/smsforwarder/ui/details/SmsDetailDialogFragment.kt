@@ -49,12 +49,82 @@ class SmsDetailDialogFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        setupBottomSheet()
         setupRecyclerView()
         observeViewModel()
 
         binding.btnOk.setOnClickListener {
             dismiss()
         }
+    }
+
+    private fun setupBottomSheet() {
+        dialog?.setOnShowListener { dialogInterface ->
+            val bottomSheetDialog = dialogInterface as? com.google.android.material.bottomsheet.BottomSheetDialog
+            val bottomSheet = bottomSheetDialog?.findViewById<android.widget.FrameLayout>(
+                com.google.android.material.R.id.design_bottom_sheet
+            )
+
+            bottomSheet?.let { sheet ->
+                val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(sheet)
+
+                // Check if in landscape mode
+                val isLandscape = resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
+                if (isLandscape) {
+                    behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+                    behavior.skipCollapsed = true
+                }
+
+                // Fix for black bar: Make the background extend behind the navigation bar
+                // sheet.background = null // REMOVED: This caused the background to disappear. 
+                // The default background of the bottom sheet should be used.
+                
+                // Handle WindowInsets for edge-to-edge
+                androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(sheet) { view, insets ->
+                    val navigationBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars())
+                    
+                    // Apply padding to the button or a container, NOT the sheet itself, to allow background to extend
+                    // But here we might need to adjust the sheet's padding if the background is set on the sheet.
+                    // The issue "black bar" usually comes from the window background or the container not extending.
+                    
+                    // Let's try a clean approach:
+                    // 1. Ensure the sheet itself has no bottom padding that clips content.
+                    view.setPadding(view.paddingLeft, view.paddingTop, view.paddingRight, 0)
+                    
+                    // 2. Add bottom margin/padding to the OK button so it clears the nav bar
+                    val params = binding.btnOk.layoutParams as? ViewGroup.MarginLayoutParams
+                    params?.let {
+                        it.bottomMargin = 24.dpToPx() + navigationBars.bottom
+                        binding.btnOk.layoutParams = it
+                    }
+                    
+                    insets
+                }
+            }
+        }
+
+        // Configure the window for edge-to-edge
+        dialog?.window?.let { window ->
+            // Make navigation bar transparent
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
+            
+            // Allow drawing behind system bars
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                window.setDecorFitsSystemWindows(false)
+            } else {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = (
+                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                )
+            }
+        }
+    }
+
+    private fun Int.dpToPx(): Int {
+        return (this * resources.displayMetrics.density).toInt()
     }
 
     private fun setupRecyclerView() {
